@@ -36,7 +36,7 @@ var clickMod = setInterval( function(){
 
 		var autoCps=setInterval(function(){
 		
-		if(secretPrest<Game.prestige){
+		if(ascendCount<Game.resets){
 			secretMult=1;
 			secretBrake=(24*60*60*365*8*10000000) + Game.prestige;
 			secretAccel=(1/secretBrake);

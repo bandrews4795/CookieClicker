@@ -1,4 +1,4 @@
-//v1.03
+//v1.04
 
 var tempClicks = Game.cookieClicks;
 var clicksPs = 0;
@@ -7,7 +7,7 @@ var secretBrake=(24*60*60*365*8*10000000)+ Game.prestige;
 var secretAccel=(1/secretBrake);
 var secretPrest=Game.prestige;
 var ascendCount=Game.resets;
-var lumpSpeed=ascendCount/100;
+var lumpSpeed=ascendCount/20;
 secretMult+=lumpSpeed;
 var resetFlag = 0;
 
@@ -21,7 +21,10 @@ var clickMod = setInterval( function(){
 	if(tempClicks<Game.cookieClicks){
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
-		if (Game.canLumps){lumpCheat(0.25*clicksPs);};
+		if (Game.canLumps){
+			lumpCheat((0.10+lumpSpeed)*clicksPs);
+			Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+		};
 		for(i=0;i<clicksPs;i++){
 			secretBrake*=1.002776436;
 			secretMult*=1.002776436; //doubles every 250 clicks
@@ -47,7 +50,7 @@ var clickMod = setInterval( function(){
 			secretAccel=(1/secretBrake);
 			secretPrest=Game.prestige;
 			ascendCount=Game.resets;
-			lumpSpeed = ascendCount/100;
+			lumpSpeed = ascendCount/20;
 			secretMult+=lumpSpeed;
 			clicksPs = 0;
 			resetFlag = 0;
@@ -84,7 +87,6 @@ var clickMod = setInterval( function(){
 		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
 		if (Game.canLumps){lumpCheat(0.05);};
 		Game.recalculateGains=1;
-		
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 		},500);

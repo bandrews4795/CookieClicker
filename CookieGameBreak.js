@@ -1,3 +1,5 @@
+//v1.02
+
 var tempClicks = Game.cookieClicks;
 var clicksPs = 0;
 var secretMult=1;
@@ -7,6 +9,7 @@ var secretPrest=Game.prestige;
 var ascendCount = Game.resets;
 secretMult+=ascendCount;
 var lumpSpeed = ascendCount/100;
+var resetFlag = 0;
 
 var lumpCheat = function(lumpAccel){
 	var tempLump = Game.lumpT;
@@ -14,29 +17,31 @@ var lumpCheat = function(lumpAccel){
 	if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
 };
 
-
-
 var clickMod = setInterval( function(){
 	if(tempClicks<Game.cookieClicks){
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
 		if (Game.canLumps){lumpCheat(0.25*clicksPs);};
 		for(i=0;i<clicksPs;i++){
-		secretBrake*=1.002776436;
-		secretMult*=1.002776436; //doubles every 250
-		Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
-		if(secretAccel<0.00231316){secretAccel*=1.028114;}
-		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
+			secretBrake*=1.002776436;
+			secretMult*=1.002776436; //doubles every 250 clicks
+			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
+			if(secretAccel<0.00231316){secretAccel*=1.028114;}
+			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
 		};
 		Game.recalculateGains = 1;
 	};
+	if(tempClicks>Game.cookieClicks){
+		resetFlag = 1;
+		tempClicks = Game.cookieClicks;
+	};
 },34);
 
-//setInterval(clickMod, 1000);
+
 
 		var autoCps=setInterval(function(){
 		
-		if(ascendCount<Game.resets){
+		if(resetFlag==1){
 			secretMult=1;
 			secretBrake=(24*60*60*365*8*10000000) + Game.prestige;
 			secretAccel=(1/secretBrake);
@@ -44,8 +49,8 @@ var clickMod = setInterval( function(){
 			ascendCount=Game.resets;
 			secretMult+=ascendCount;
 			lumpSpeed = ascendCount/100;
-			tempClicks = 0;
 			clicksPs = 0;
+			resetFlag = 0;
 		};
 		if(secretMult*(1+secretAccel)< secretMult + 0.01){
 			secretMult+=0.001;
@@ -58,6 +63,7 @@ var clickMod = setInterval( function(){
 			secretMult*=(1+secretAccel);
 		};
 		if(secretAccel<0.00231316){
+			//Doubles secretMult every 300 ticks
 			secretAccel+=((2/secretBrake)*secretMult*(1+ascendCount));
 			secretAccel*=1.01396;//Doubles every 50
 		};
@@ -65,6 +71,7 @@ var clickMod = setInterval( function(){
 			secretBrake+=secretMult;
 		};
 		if(secretMult>(secretBrake/1000)) {
+			//This doubles every 600 ticks
 			secretBrake*=1.0011559;
 		};
 		if(Game.shimmerTypes.golden.time < Game.shimmerTypes.golden.maxTime){
@@ -77,10 +84,10 @@ var clickMod = setInterval( function(){
 		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
 		if (Game.canLumps){lumpCheat(0.05);};
 		Game.recalculateGains=1;
-		//clickMod();
+		
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
-		},1000);
+		},500);
 		
 		
 		

@@ -1,4 +1,4 @@
-//v1.02
+//v1.03
 
 var tempClicks = Game.cookieClicks;
 var clicksPs = 0;
@@ -6,9 +6,9 @@ var secretMult=1;
 var secretBrake=(24*60*60*365*8*10000000)+ Game.prestige;
 var secretAccel=(1/secretBrake);
 var secretPrest=Game.prestige;
-var ascendCount = Game.resets;
-secretMult+=ascendCount;
-var lumpSpeed = ascendCount/100;
+var ascendCount=Game.resets;
+var lumpSpeed=ascendCount/100;
+secretMult+=lumpSpeed;
 var resetFlag = 0;
 
 var lumpCheat = function(lumpAccel){
@@ -47,8 +47,8 @@ var clickMod = setInterval( function(){
 			secretAccel=(1/secretBrake);
 			secretPrest=Game.prestige;
 			ascendCount=Game.resets;
-			secretMult+=ascendCount;
 			lumpSpeed = ascendCount/100;
+			secretMult+=lumpSpeed;
 			clicksPs = 0;
 			resetFlag = 0;
 		};

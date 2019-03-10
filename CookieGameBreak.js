@@ -1,4 +1,4 @@
-//v1.10
+//v1.11
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -62,9 +62,12 @@ var autoCps=function(power){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	if(gameAge-tempAge>300000){
-		autoCps(Math.round(gameAge/1000));
-		tempAge=(Math.round(gameAge/1000)*1000);
+	if(gameAge-tempAge>=500000){
+		for(i=0;i<=Math.round((gameAge/1000)/500);i++){
+		autoCps(500);
+		tempAge+=500000;
+		};
+		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
 	while(tempAge+1000<=gameAge){
 		autoCps(1);

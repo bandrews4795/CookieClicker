@@ -62,11 +62,9 @@ var autoCps=function(power){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	if(gameAge-tempAge>=500000){
-		for(i=0;i<=Math.round((gameAge/1000)/500);i++){
-		autoCps(500);
-		tempAge+=500000;
-		};
+	while(gameAge-tempAge>=10000){
+		autoCps(10);
+		tempAge+=10000;
 		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
 	while(tempAge+1000<=gameAge){

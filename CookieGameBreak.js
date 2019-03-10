@@ -36,6 +36,7 @@ var lumpCheat = function(lumpAccel){
 var autoCps=function(power){
 		
 		if(resetFlag==1){initGame();};
+	
 		if(secretMult<(secretBrake/1000)){
 			secretBrake+=secretMult*power;
 		};
@@ -61,7 +62,7 @@ var autoCps=function(power){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	while(gameAge-tempAge>300000){
+	if(gameAge-tempAge>300000){
 		autoCps(Math.round(gameAge/1000));
 		tempAge=(Math.round(gameAge/1000)*1000);
 	};

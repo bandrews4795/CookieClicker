@@ -10,7 +10,7 @@
 	var lumpSpeed=ascendCount/50;
 	secretMult+=lumpSpeed;
 	var resetFlag = 0;
-	var gameAge = (Date.now()-Game.startDate);
+	var gameAge = 0;
 	var tempAge = 0;
 	
 var initGame = function(){
@@ -24,7 +24,7 @@ var initGame = function(){
 	lumpSpeed=ascendCount/50;
 	secretMult+=lumpSpeed;
 	resetFlag = 0;
-	gameAge = (Date.now()-Game.startDate);
+	gameAge = 0;
 	tempAge = 0;
 };
 var lumpCheat = function(lumpAccel){

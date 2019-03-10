@@ -72,8 +72,8 @@ var autoCps=function(power){
 			lumpCheat(((0.10+lumpSpeed)*10));
 			Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 		};
-		secretBrake*=Math.pow(1.002776436,10);
-		secretMult*=Math.pow(1.002776436,10);
+		secretBrake*=Math.pow(1.0027764359010776884367330590725,10);
+		secretMult*=Math.pow(1.0027764359010776884367330590725,10);
 		clicksPs-=10;
 	};
 		

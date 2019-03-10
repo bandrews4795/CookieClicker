@@ -1,10 +1,10 @@
-//v1.18
+//v1.19
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
 	var secretMult=1;
 	var secretBrake=(24*60*60*365*8*1000000000)+ Game.prestige;
-	var secretAccel=0.0023131618421728416301146110022; //doubles every 300
+	var secretAccel=0.002314; //doubles every 300
 	var secretPrest=Game.prestige;
 	var ascendCount=Game.resets;
 	var lumpSpeed=ascendCount/50;
@@ -18,7 +18,7 @@ var initGame = function(){
 	clicksPs = 0;
 	secretMult=1;
 	secretBrake=(24*60*60*365*8*1000000000)+ Game.prestige;
-	secretAccel=0.0023131618421728416301146110022;
+	secretAccel=0.002314;
 	secretPrest=Game.prestige;
 	ascendCount=Game.resets;
 	lumpSpeed=ascendCount/50;
@@ -42,7 +42,7 @@ var autoCps=function(power){
 		};
 		if(secretMult>(secretBrake/1000)) {
 			//This doubles every 600 ticks
-			secretBrake*=Math.pow(1.0011559128538236035013794460348,power);
+			secretBrake*=Math.pow(1.001156,power);
 		};
 		if(Math.pow(secretMult*(1+secretAccel),power)<secretBrake){
 			secretMult*=Math.pow((1+secretAccel),power);
@@ -72,8 +72,8 @@ var autoCps=function(power){
 			lumpCheat(((0.10+lumpSpeed)*10));
 			Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 		};
-		secretBrake*=Math.pow(1.0027764359010776884367330590725,10);
-		secretMult*=Math.pow(1.0027764359010776884367330590725,10);
+		secretBrake*=Math.pow(1.002777,10);
+		secretMult*=Math.pow(1.002777,10);
 		clicksPs-=10;
 	};
 		
@@ -97,8 +97,8 @@ var clickMod = setInterval( function(){
 				lumpCheat(((0.10+lumpSpeed)*10));
 				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
-			secretBrake*=Math.pow(1.0027764359010776884367330590725,10);
-			secretMult*=Math.pow(1.0027764359010776884367330590725,10);
+			secretBrake*=Math.pow(1.002777,10);
+			secretMult*=Math.pow(1.002777,10);
 			clicksPs-=10;
 		};
 		while(clicksPs>0){
@@ -106,8 +106,8 @@ var clickMod = setInterval( function(){
 				lumpCheat((0.10+lumpSpeed));
 				Game.lumpRefill-=(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
-			secretBrake*=1.0027764359010776884367330590725;
-			secretMult*=1.0027764359010776884367330590725; //doubles every 250 clicks
+			secretBrake*=1.002777;
+			secretMult*=1.002777; //doubles every 250 clicks
 			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
 			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
 			clicksPs--;

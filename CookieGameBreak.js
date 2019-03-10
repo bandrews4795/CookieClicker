@@ -1,4 +1,4 @@
-//v1.07
+//v1.08
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -80,6 +80,9 @@ var timeLoop = setInterval(function(){
 		autoCps();
 		tempAge+=1000;
 	}
+	if(tempAge>gameAge){
+	initGame();
+	};
 },1000);
 
 var clickMod = setInterval( function(){

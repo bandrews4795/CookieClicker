@@ -4,7 +4,7 @@
 	var clicksPs = 0;
 	var secretMult=1;
 	var secretBrake=(24*60*60*365*8*1000000000)+ Game.prestige;
-	var secretAccel=(1/secretBrake);
+	var secretAccel=0.00231316; //doubles every 300
 	var secretPrest=Game.prestige;
 	var ascendCount=Game.resets;
 	var lumpSpeed=ascendCount/50;
@@ -18,7 +18,7 @@ var initGame = function(){
 	clicksPs = 0;
 	secretMult=1;
 	secretBrake=(24*60*60*365*8*1000000000)+ Game.prestige;
-	secretAccel=(1/secretBrake);
+	secretAccel=0.00231316;
 	secretPrest=Game.prestige;
 	ascendCount=Game.resets;
 	lumpSpeed=ascendCount/50;
@@ -35,22 +35,7 @@ var lumpCheat = function(lumpAccel){
 
 var autoCps=function(power){
 		
-		if(resetFlag==1){
-			initGame();
-		};
-		if(secretMult*(1+secretAccel)< secretMult + 0.01){
-			secretMult+=0.002*power;
-			if(secretAccel<0.00000000000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
-			if(secretAccel<0.00000000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
-			if(secretAccel<0.00000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
-			if(secretAccel<0.000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
-		};
-		if(secretAccel<0.00231316){
-			//Doubles secretMult every 300 ticks
-			secretAccel+=((2/secretBrake)*secretMult*(1+ascendCount))*power;
-			secretAccel*=Math.pow(1.01396, power);//Doubles every 50
-		};
-		if(secretAccel>0.00231316){secretAccel=0.00231316;};
+		if(resetFlag==1){initGame();};
 		if(secretMult<(secretBrake/1000)){
 			secretBrake+=secretMult*power;
 		};
@@ -101,8 +86,6 @@ var clickMod = setInterval( function(){
 			secretBrake*=Math.pow(1.002776436,clicksPs);
 			secretMult*=Math.pow(1.002776436,clicksPs); //doubles every 250 clicks
 			Game.shimmerTypes.golden.time*=Math.pow((1.1+lumpSpeed),clicksPs);
-			if(secretAccel<0.00231316){secretAccel*=Math.pow(1.028114,clicksPs);}
-			if(secretAccel>0.00231316){secretAccel=0.00231316;};
 			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= Math.pow((1.1+lumpSpeed),clicksPs);}
 		};
 		Game.recalculateGains = 1;

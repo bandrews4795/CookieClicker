@@ -1,4 +1,4 @@
-//v1.06
+//v1.07
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -10,7 +10,9 @@
 	var lumpSpeed=ascendCount/50;
 	secretMult+=lumpSpeed;
 	var resetFlag = 0;
-
+	var gameAge = (Date.now()-Game.startDate);
+	var tempAge = 0;
+	
 var initGame = function(){
 	tempClicks = 0;
 	clicksPs = 0;
@@ -22,38 +24,16 @@ var initGame = function(){
 	lumpSpeed=ascendCount/50;
 	secretMult+=lumpSpeed;
 	resetFlag = 0;
+	gameAge = (Date.now()-Game.startDate);
+	tempAge = 0;
 };
 var lumpCheat = function(lumpAccel){
 	var tempLump = Game.lumpT;
 	Game.lumpT=Game.lumpT-(lumpAccel*(Date.now()-Game.lumpT));
 	if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
 };
-var clickMod = setInterval( function(){
-	if(tempClicks<Game.cookieClicks){
-		clicksPs = Game.cookieClicks - tempClicks;
-		tempClicks = Game.cookieClicks;
-		if (Game.canLumps){
-			lumpCheat((0.10+lumpSpeed)*clicksPs);
-			Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
-		};
-		for(i=0;i<clicksPs;i++){
-			secretBrake*=1.002776436;
-			secretMult*=1.002776436; //doubles every 250 clicks
-			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
-			if(secretAccel<0.00231316){secretAccel*=1.028114;}
-			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
-		};
-		Game.recalculateGains = 1;
-	};
-	if(tempClicks>Game.cookieClicks){
-		resetFlag = 1;
-		tempClicks = Game.cookieClicks;
-	};
-},34);
 
-
-
-	var autoCps=setInterval(function(){
+var autoCps=function(){
 		
 		if(resetFlag==1){
 			initGame();
@@ -92,8 +72,83 @@ var clickMod = setInterval( function(){
 		Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
-		},1000);
+	};
+
+var timeLoop = setInterval(function(){
+	gameAge = (Date.now()-Game.startDate);
+	while(tempAge+30<=gameAge){
+		autoCps();
+		tempAge+=30;
+	}
+},1000);
+
+var clickMod = setInterval( function(){
+	if(tempClicks<Game.cookieClicks){
+		clicksPs = Game.cookieClicks - tempClicks;
+		tempClicks = Game.cookieClicks;
+		if (Game.canLumps){
+			lumpCheat((0.10+lumpSpeed)*clicksPs);
+			Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+		};
+		for(i=0;i<clicksPs;i++){
+			secretBrake*=1.002776436;
+			secretMult*=1.002776436; //doubles every 250 clicks
+			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
+			if(secretAccel<0.00231316){secretAccel*=1.028114;}
+			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
+		};
+		Game.recalculateGains = 1;
+	};
+	if(tempClicks>Game.cookieClicks){
+		resetFlag = 1;
+		tempClicks = Game.cookieClicks;
+	};
+},34);
+
+
+
+	var autoCps=function(){
 		
+		if(resetFlag==1){
+			initGame();
+		};
+		if(secretMult*(1+secretAccel)< secretMult + 0.01){
+			secretMult+=0.002;
+			if(secretAccel<0.00000000000005)secretAccel*=1.01396; //Doubles every 50
+			if(secretAccel<0.00000000005)secretAccel*=1.01396;//Doubles every 50
+			if(secretAccel<0.00000005)secretAccel*=1.01396;//Doubles every 50
+			if(secretAccel<0.000005)secretAccel*=1.01396;//Doubles every 50
+		};
+			if(secretMult*(1+secretAccel)<secretBrake){
+			secretMult*=(1+secretAccel);
+		};
+		if(secretAccel<0.00231316){
+			//Doubles secretMult every 300 ticks
+			secretAccel+=((2/secretBrake)*secretMult*(1+ascendCount));
+			secretAccel*=1.01396;//Doubles every 50
+		};
+		if(secretMult<(secretBrake/1000)){
+			secretBrake+=secretMult;
+		};
+		if(secretMult>(secretBrake/1000)) {
+			//This doubles every 600 ticks
+			secretBrake*=1.0011559;
+		};
+		if(Game.shimmerTypes.golden.time < Game.shimmerTypes.golden.maxTime){
+			Game.shimmerTypes.golden.time*=1+secretAccel;
+		};
+		if(Game.cookiesPs<0.1){
+			Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime;
+		};
+		Game.shimmerTypes.golden.time*=1+secretAccel;
+		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
+		if (Game.canLumps){lumpCheat(0.05);};
+		Game.recalculateGains=1;
+		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
+		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
+	};
+
+
 		
 		
 		

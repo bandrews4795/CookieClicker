@@ -76,9 +76,9 @@ var autoCps=function(){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	while(tempAge+30<=gameAge){
+	while(tempAge+1000<=gameAge){
 		autoCps();
-		tempAge+=30;
+		tempAge+=1000;
 	}
 },1000);
 

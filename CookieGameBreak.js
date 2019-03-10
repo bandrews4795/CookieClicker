@@ -1,4 +1,4 @@
-//v1.15
+//v1.16
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -62,9 +62,9 @@ var autoCps=function(power){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	while(gameAge-tempAge>=20000){
-		autoCps(20);
-		tempAge+=20000;
+	while(gameAge-tempAge>=10000){
+		autoCps(10);
+		tempAge+=10000;
 		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
 	while(tempAge+1000<=gameAge){
@@ -80,14 +80,14 @@ var clickMod = setInterval( function(){
 	if(tempClicks<Game.cookieClicks){
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
-		while(clicksPs-20>=0){
+		while(clicksPs-10>=0){
 			if (Game.canLumps){
-				lumpCheat(((0.10+lumpSpeed)*20));
-				Game.lumpRefill-=20*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+				lumpCheat(((0.10+lumpSpeed)*10));
+				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
-			secretBrake*=Math.pow(1.002776436,20);
-			secretMult*=Math.pow(1.002776436,20);
-			clicksPs-=20;
+			secretBrake*=Math.pow(1.002776436,10);
+			secretMult*=Math.pow(1.002776436,10);
+			clicksPs-=10;
 		};
 		while(clicksPs>0){
 			if (Game.canLumps){

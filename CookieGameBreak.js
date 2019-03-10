@@ -1,4 +1,4 @@
-//v1.16
+//v1.17
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -59,14 +59,26 @@ var autoCps=function(power){
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 	};
-
-var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
 	while(gameAge-tempAge>=10000){
 		autoCps(10);
 		tempAge+=10000;
 		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
+	clicksPs = Game.cookieClicks - tempClicks;
+	tempClicks = Game.cookieClicks;
+	while(clicksPs-10>=0){
+		if (Game.canLumps){
+			lumpCheat(((0.10+lumpSpeed)*10));
+			Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+		};
+		secretBrake*=Math.pow(1.002776436,10);
+		secretMult*=Math.pow(1.002776436,10);
+		clicksPs-=10;
+	};
+		
+var timeLoop = setInterval(function(){
+	gameAge = (Date.now()-Game.startDate);
 	while(tempAge+1000<=gameAge){
 		autoCps(1);
 		tempAge+=1000;

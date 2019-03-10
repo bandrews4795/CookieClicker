@@ -1,4 +1,4 @@
-//v1.14
+//v1.15
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -82,7 +82,7 @@ var clickMod = setInterval( function(){
 		tempClicks = Game.cookieClicks;
 		while(clicksPs-20>=0){
 			if (Game.canLumps){
-				lumpCheat((0.10+lumpSpeed)*20);
+				lumpCheat(((0.10+lumpSpeed)*20));
 				Game.lumpRefill-=20*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
 			secretBrake*=Math.pow(1.002776436,20);
@@ -91,13 +91,13 @@ var clickMod = setInterval( function(){
 		};
 		while(clicksPs>0){
 			if (Game.canLumps){
-				lumpCheat((0.10+lumpSpeed)*clicksPs);
-				Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+				lumpCheat((0.10+lumpSpeed));
+				Game.lumpRefill-=(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
-			secretBrake*=Math.pow(1.002776436,clicksPs);
-			secretMult*=Math.pow(1.002776436,clicksPs); //doubles every 250 clicks
-			Game.shimmerTypes.golden.time*=Math.pow((1.1+lumpSpeed),clicksPs);
-			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= Math.pow((1.1+lumpSpeed),clicksPs);}
+			secretBrake*=1.002776436;
+			secretMult*=1.002776436; //doubles every 250 clicks
+			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
+			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
 			clicksPs--;
 		}
 		Game.recalculateGains = 1;

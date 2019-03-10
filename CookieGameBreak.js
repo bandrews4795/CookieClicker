@@ -1,4 +1,4 @@
-//v1.08
+//v1.09
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -33,42 +33,42 @@ var lumpCheat = function(lumpAccel){
 	if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
 };
 
-var autoCps=function(){
+var autoCps=function(power){
 		
 		if(resetFlag==1){
 			initGame();
 		};
 		if(secretMult*(1+secretAccel)< secretMult + 0.01){
-			secretMult+=0.002;
-			if(secretAccel<0.00000000000005)secretAccel*=1.01396; //Doubles every 50
-			if(secretAccel<0.00000000005)secretAccel*=1.01396;//Doubles every 50
-			if(secretAccel<0.00000005)secretAccel*=1.01396;//Doubles every 50
-			if(secretAccel<0.000005)secretAccel*=1.01396;//Doubles every 50
-		};
-			if(secretMult*(1+secretAccel)<secretBrake){
-			secretMult*=(1+secretAccel);
+			secretMult+=0.002*power;
+			if(secretAccel<0.00000000000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
+			if(secretAccel<0.00000000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
+			if(secretAccel<0.00000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
+			if(secretAccel<0.000005)secretAccel*=Math.pow(1.01396, power);//Doubles every 50
 		};
 		if(secretAccel<0.00231316){
 			//Doubles secretMult every 300 ticks
-			secretAccel+=((2/secretBrake)*secretMult*(1+ascendCount));
-			secretAccel*=1.01396;//Doubles every 50
+			secretAccel+=((2/secretBrake)*secretMult*(1+ascendCount))*power;
+			secretAccel*=Math.pow(1.01396, power);//Doubles every 50
 		};
+		if(secretAccel>0.00231316){secretAccel=0.00231316;};
 		if(secretMult<(secretBrake/1000)){
-			secretBrake+=secretMult;
+			secretBrake+=secretMult*power;
 		};
 		if(secretMult>(secretBrake/1000)) {
 			//This doubles every 600 ticks
-			secretBrake*=1.0011559;
+			secretBrake*=Math.pow(1.0011559,power);
+		};
+		if(Math.pow(secretMult*(1+secretAccel),power)<secretBrake){
+			secretMult*=Math.pow((1+secretAccel),power);
 		};
 		if(Game.shimmerTypes.golden.time < Game.shimmerTypes.golden.maxTime){
-			Game.shimmerTypes.golden.time*=1+secretAccel;
+			Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
 		};
 		if(Game.cookiesPs<0.1){
-			Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime;
+			Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;
 		};
-		Game.shimmerTypes.golden.time*=1+secretAccel;
 		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
-		if (Game.canLumps){lumpCheat(0.05);};
+		if (Game.canLumps){lumpCheat(0.05*power);};
 		Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
@@ -76,10 +76,14 @@ var autoCps=function(){
 
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
+	while(gameAge-tempAge>300000){
+		autoCps(300);
+		tempAge+=300000;
+	};
 	while(tempAge+1000<=gameAge){
-		autoCps();
+		autoCps(1);
 		tempAge+=1000;
-	}
+	};
 	if(tempAge>gameAge){
 	initGame();
 	};
@@ -93,12 +97,13 @@ var clickMod = setInterval( function(){
 			lumpCheat((0.10+lumpSpeed)*clicksPs);
 			Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 		};
-		for(i=0;i<clicksPs;i++){
-			secretBrake*=1.002776436;
-			secretMult*=1.002776436; //doubles every 250 clicks
-			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
-			if(secretAccel<0.00231316){secretAccel*=1.028114;}
-			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
+		if (clicksPs>0){
+			secretBrake*=Math.pow(1.002776436,clicksPs);
+			secretMult*=Math.pow(1.002776436,clicksPs); //doubles every 250 clicks
+			Game.shimmerTypes.golden.time*=Math.pow((1.1+lumpSpeed),clicksPs);
+			if(secretAccel<0.00231316){secretAccel*=Math.pow(1.028114,clicksPs);}
+			if(secretAccel>0.00231316){secretAccel=0.00231316;};
+			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= Math.pow((1.1+lumpSpeed),clicksPs);}
 		};
 		Game.recalculateGains = 1;
 	};

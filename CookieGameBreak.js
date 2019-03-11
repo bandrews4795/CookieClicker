@@ -102,7 +102,7 @@ var clickMod = setInterval( function(){
 		while(clicksPs-10>=0){
 			if (Game.canLumps){
 				//lumpCheat(((0.10+lumpSpeed)*10));
-				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT;
+				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT);
 				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
 			secretBrake*=Math.pow(1.002777,10);

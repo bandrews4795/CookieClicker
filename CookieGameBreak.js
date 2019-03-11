@@ -1,4 +1,4 @@
-//v1.30
+//v1.32
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -40,7 +40,12 @@ var autoCps=function(power){
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 };
+	
 	gameAge = (Date.now()-Game.startDate);
+	if (gameAge==0){
+		setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
+	};
+	
 	if (gameAge/1000/60/60>1){
 		var hoursPlayed=Math.round(gameAge/1000/60/60)
 		var brakeDouble=hoursPlayed*6;
@@ -71,6 +76,9 @@ var autoCps=function(power){
 		
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
+	if (gameAge==0){
+		setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
+	};
 	if(gameAge-tempAge>=1000){
 		autoCps(Math.round((gameAge-tempAge)/1000));
 		tempAge+=Math.round((gameAge-tempAge)/1000)*1000;

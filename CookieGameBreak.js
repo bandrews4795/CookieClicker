@@ -1,4 +1,4 @@
-//v1.28
+//v1.29
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -36,7 +36,7 @@ var autoCps=function(power){
 	if (secretMult>secretBrake){secretMult=secretBrake;};
 	Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
 	if(Game.cookiesPs<0.1){Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;};
-	if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
+	if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1 + secretAccel)*power;};
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 };
@@ -79,6 +79,7 @@ var timeLoop = setInterval(function(){
 	if(tempAge>gameAge){
 	initGame();
 	};
+	Game.recalculateGains = 1;
 },1000);
 
 var clickMod = setInterval( function(){

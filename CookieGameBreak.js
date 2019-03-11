@@ -1,4 +1,4 @@
-//v1.24
+//v1.25
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -77,20 +77,16 @@ var autoCps=function(power){
 	clicksPs = Game.cookieClicks - tempClicks;
 	tempClicks = Game.cookieClicks;
 	if(clicksPs>1000){
-		secretBrake*=Math.pow(2,Math.round(clicksPs/250));
-		secretMult*=Math.pow(2,Math.round(clicksPs/250));
-		clicksPs-=(Math.round(clicksPs/250))*250;
-		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/250)*250)*(Date.now()-Game.lumpT)
+		secretBrake*=Math.pow(8,Math.round(clicksPs/1000));
+		secretMult*=Math.pow(8,Math.round(clicksPs/1000));
+		clicksPs-=(Math.round(clicksPs/1000))*1000;
+		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/1000)*1000)*(Date.now()-Game.lumpT)
 	};
-	while(clicksPs-10>=0){
-		if (Game.canLumps){
-			//lumpCheat(((0.10+lumpSpeed)*10));
-			Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT) ;
-			//Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
-		};
-		secretBrake*=Math.pow(1.002777,10);
-		secretMult*=Math.pow(1.002777,10);
-		clicksPs-=10;
+	while(clicksPs-20>=0){
+		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*20)*(Date.now()-Game.lumpT);};
+		secretBrake*=Math.pow(1.002777,20);
+		secretMult*=Math.pow(1.002777,20);
+		clicksPs-=20;
 	};
 		
 var timeLoop = setInterval(function(){

@@ -1,4 +1,4 @@
-//v1.34
+//v1.35
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -85,8 +85,11 @@ var timeLoop = setInterval(function(){
 		autoCps(Math.round((gameAge-tempAge)/1000));
 		tempAge+=Math.round((gameAge-tempAge)/1000)*1000;
 	};
+	if(tempAge>gameAge+10000){
+		initGame();
+	};
 	if(tempAge>gameAge){
-	initGame();
+		tempAge=gameAge;
 	};
 	Game.recalculateGains = 1;
 },1000);

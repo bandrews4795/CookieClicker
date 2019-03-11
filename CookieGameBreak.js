@@ -1,4 +1,4 @@
-//v1.26
+//v1.27
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -35,9 +35,7 @@ var autoCps=function(power){
 	secretMult*=Math.pow((1+secretAccel),power);
 	if (secretMult>secretBrake){secretMult=secretBrake;};
 	Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
-	if(Game.cookiesPs<0.1){
-		Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;
-	};
+	if(Game.cookiesPs<0.1){Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;};
 	if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
 	Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();

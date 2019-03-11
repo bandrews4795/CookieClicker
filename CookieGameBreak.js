@@ -1,4 +1,4 @@
-//v1.23
+//v1.24
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -126,6 +126,7 @@ var clickMod = setInterval( function(){
 			secretBrake*=1.002777;
 			secretMult*=1.002777; //doubles every 250 clicks
 			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
+			Game.startDate-=1000;
 			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
 			clicksPs--;
 		}

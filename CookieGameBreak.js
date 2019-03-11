@@ -1,4 +1,4 @@
-//v2.01	
+//v2.02
 	
 
 	var tempClicks = 0;
@@ -70,12 +70,25 @@ if (gameAge==0){
 		clicksPs-=(Math.round(clicksPs/1000))*1000;
 		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/1000)*1000)*(Date.now()-Game.lumpT)
 	};
-	while(clicksPs>20){
-		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*20)*(Date.now()-Game.lumpT);};
-		secretBrake*=Math.pow(1.002777,20);
-		secretMult*=Math.pow(1.002777,20);
-		clicksPs-=20;
+	while(clicksPs>100){
+		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*100)*(Date.now()-Game.lumpT);};
+		secretBrake*=Math.pow(1.002777,100);
+		secretMult*=Math.pow(1.002777,100);
+		clicksPs-=100;
 	};
+	if(clicksPs>0){
+		if (Game.canLumps){
+			Game.lumpT-=((0.10+lumpSpeed)*clicksPs)*(Date.now()-Game.lumpT);
+			Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+		};
+		secretBrake*=Math.pow(1.002777,clicksPs);
+		secretMult*=Math.pow(1.002777,clicksPs);
+		Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
+		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
+		clicksPs=0;
+	};
+	Game.recalculateGains = 1;
+
 		
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);

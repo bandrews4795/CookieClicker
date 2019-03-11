@@ -1,4 +1,4 @@
-//v1.19
+//v1.20
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -27,11 +27,11 @@ var initGame = function(){
 	gameAge = 0;
 	tempAge = 0;
 };
-var lumpCheat = function(lumpAccel){
-	var tempLump = Game.lumpT;
-	Game.lumpT=Game.lumpT-(lumpAccel*(Date.now()-Game.lumpT));
-	if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
-};
+//var lumpCheat = function(lumpAccel){
+	//var tempLump = Game.lumpT;
+	//Game.lumpT=Game.lumpT-(lumpAccel*(Date.now()-Game.lumpT));
+	//if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
+//};
 
 var autoCps=function(power){
 		
@@ -54,7 +54,7 @@ var autoCps=function(power){
 			Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;
 		};
 		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
-		if (Game.canLumps){lumpCheat(0.05*power);};
+		//if (Game.canLumps){lumpCheat(0.05*power);};
 		Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
@@ -67,10 +67,17 @@ var autoCps=function(power){
 	};
 	clicksPs = Game.cookieClicks - tempClicks;
 	tempClicks = Game.cookieClicks;
+	if(clicksPs>1000){
+		secretBrake*=Math.pow(2,Math.round(clicksPs/250));
+		secretMult*=Math.pow(2,Math.round(clicksPs/250));
+		clicksPs-=(Math.round(clicksPs/250))*250;
+		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/250)*250)*(Date.now()-Game.lumpT)
+	;
 	while(clicksPs-10>=0){
 		if (Game.canLumps){
-			lumpCheat(((0.10+lumpSpeed)*10));
-			Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+			//lumpCheat(((0.10+lumpSpeed)*10));
+			Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT) ;
+			//Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 		};
 		secretBrake*=Math.pow(1.002777,10);
 		secretMult*=Math.pow(1.002777,10);
@@ -94,7 +101,8 @@ var clickMod = setInterval( function(){
 		tempClicks = Game.cookieClicks;
 		while(clicksPs-10>=0){
 			if (Game.canLumps){
-				lumpCheat(((0.10+lumpSpeed)*10));
+				//lumpCheat(((0.10+lumpSpeed)*10));
+				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT;
 				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
 			secretBrake*=Math.pow(1.002777,10);
@@ -103,7 +111,7 @@ var clickMod = setInterval( function(){
 		};
 		while(clicksPs>0){
 			if (Game.canLumps){
-				lumpCheat((0.10+lumpSpeed));
+				Game.lumpT-=(0.10+lumpSpeed)*(Date.now()-Game.lumpT);
 				Game.lumpRefill-=(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
 			secretBrake*=1.002777;

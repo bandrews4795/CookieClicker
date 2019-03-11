@@ -1,4 +1,4 @@
-//v1.27
+//v1.28
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -37,7 +37,6 @@ var autoCps=function(power){
 	Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
 	if(Game.cookiesPs<0.1){Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;};
 	if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
-	Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 };
@@ -51,9 +50,9 @@ var autoCps=function(power){
 		if (secretMult>secretBrake){secretMult=secretBrake;};
 		tempAge+=hoursPlayed*60*60*1000;
 	};
-	while(gameAge-tempAge>=20000){
-		autoCps(20);
-		tempAge+=20000;
+	while(gameAge-tempAge>=30000){
+		autoCps(30);
+		tempAge+=30000;
 		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
 	clicksPs = Game.cookieClicks - tempClicks;
@@ -64,7 +63,7 @@ var autoCps=function(power){
 		clicksPs-=(Math.round(clicksPs/1000))*1000;
 		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/1000)*1000)*(Date.now()-Game.lumpT)
 	};
-	while(clicksPs-20>=0){
+	while(clicksPs>20){
 		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*20)*(Date.now()-Game.lumpT);};
 		secretBrake*=Math.pow(1.002777,20);
 		secretMult*=Math.pow(1.002777,20);
@@ -73,9 +72,9 @@ var autoCps=function(power){
 		
 var timeLoop = setInterval(function(){
 	gameAge = (Date.now()-Game.startDate);
-	while(tempAge+1000<=gameAge){
-		autoCps(1);
-		tempAge+=1000;
+	if(gameAge-tempAge>=1000){
+		autoCps(Math.round((gameAge-tempAge)/1000));
+		tempAge+=Math.round((gameAge-tempAge)/1000)*1000;
 	};
 	if(tempAge>gameAge){
 	initGame();
@@ -86,7 +85,7 @@ var clickMod = setInterval( function(){
 	if(tempClicks<Game.cookieClicks){
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
-		while(clicksPs-10>=0){
+		while(clicksPs>=10){
 			if (Game.canLumps){
 				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT);
 				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
@@ -663,4 +662,4 @@ var clickMod = setInterval( function(){
 			/*AddEvent(l('selectionKeeper'),'mouseup',function(e){
 				console.log('selection:',window.getSelection());
 			});*/
-		}
+		};

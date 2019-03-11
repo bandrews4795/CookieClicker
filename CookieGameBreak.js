@@ -1,4 +1,4 @@
-//v2.04
+//v2.05
 	
 
 	var tempClicks = 0;
@@ -63,16 +63,16 @@ if (gameAge==0){
 	clicksPs = Game.cookieClicks - tempClicks;
 	tempClicks = Game.cookieClicks;
 	if(clicksPs>1000){
-		secretBrake*=Math.pow(8,Math.round(clicksPs/1000));
-		secretMult*=Math.pow(8,Math.round(clicksPs/1000));
+		secretBrake*=Math.pow(16,Math.round(clicksPs/1000));
+		secretMult*=Math.pow(16,Math.round(clicksPs/1000));
 		clicksPs-=(Math.round(clicksPs/1000))*1000;
 		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/1000)*1000)*(Date.now()-Game.lumpT)
 	};
-	while(clicksPs>50){
-		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*50)*(Date.now()-Game.lumpT);};
-		secretBrake*=Math.pow(1.002777,50);
-		secretMult*=Math.pow(1.002777,50);
-		clicksPs-=50;
+	while(clicksPs>100){
+		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*100)*(Date.now()-Game.lumpT);};
+		secretBrake*=Math.pow(1.002777,100);
+		secretMult*=Math.pow(1.002777,100);
+		clicksPs-=100;
 	};
 	if(clicksPs>0){
 		if (Game.canLumps){

@@ -1,4 +1,4 @@
-//v1.20
+//v1.21
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -72,7 +72,7 @@ var autoCps=function(power){
 		secretMult*=Math.pow(2,Math.round(clicksPs/250));
 		clicksPs-=(Math.round(clicksPs/250))*250;
 		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/250)*250)*(Date.now()-Game.lumpT)
-	;
+	};
 	while(clicksPs-10>=0){
 		if (Game.canLumps){
 			//lumpCheat(((0.10+lumpSpeed)*10));

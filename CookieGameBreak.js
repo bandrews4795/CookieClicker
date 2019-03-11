@@ -1,4 +1,4 @@
-//v1.29
+//v1.30
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -50,10 +50,9 @@ var autoCps=function(power){
 		if (secretMult>secretBrake){secretMult=secretBrake;};
 		tempAge+=hoursPlayed*60*60*1000;
 	};
-	while(gameAge-tempAge>=30000){
-		autoCps(30);
-		tempAge+=30000;
-		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
+	if(gameAge-tempAge>=30000){
+		autoCps(30*Math.round((gameAge-tempAge)/30000));
+		tempAge+=Math.round((gameAge-tempAge)/30000)*30000;
 	};
 	clicksPs = Game.cookieClicks - tempClicks;
 	tempClicks = Game.cookieClicks;

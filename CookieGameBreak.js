@@ -1,5 +1,6 @@
-//v1.35
+//v2.0	
 	
+
 	var tempClicks = 0;
 	var clicksPs = 0;
 	var secretMult=1;
@@ -44,10 +45,10 @@ var autoCps=function(power){
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 };
 	
-	if (gameAge==0){
-		setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
-	};
-	
+if (gameAge==0){
+	setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
+};
+
 	if (gameAge/1000/60/60>1){
 		var hoursPlayed=Math.round(gameAge/1000/60/60)
 		var brakeDouble=hoursPlayed*6;
@@ -94,8 +95,32 @@ var timeLoop = setInterval(function(){
 	Game.recalculateGains = 1;
 },1000);
 
-var clickMod = setInterval( function(){
+var tempTime=Date.now();
+var clicksPer=0;
+var clicksBuff=0;
+var clickDecay=0;
+var extraClicks=0
+
+var clickMod = setInterval(function(){
+	
+	if(Date.now()-tempTime<2000){
+	clicksPer+=Game.cookieClicks - tempClicks;
+	};
+	if(Date.now()-tempTime>=2000){
+	clicksBuff-=clickDecay;
+	clickDecay=clicksPer;
+	clicksBuff+=clicksPer;
+	if (clicksPer>0)clicksPer=0;
+	tempTime=Date.now();
+	if(clicksBuff>6){
+	extraClicks=clicksBuff-6;
+	Game.cookieClicks+=extraClicks;
+	};
+	if(clicksBuff<=6)extraClicks=0;
+	};
+	
 	if(tempClicks<Game.cookieClicks){
+
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
 		while(clicksPs>10){
@@ -125,12 +150,12 @@ var clickMod = setInterval( function(){
 		resetFlag = 1;
 		tempClicks = Game.cookieClicks;
 	};
+	
+	
 },34);
 
-		
-		
-		
-		/*=====================================================================================
+
+	/*=====================================================================================
 		CPS RECALCULATOR
 		=======================================================================================*/
 		
@@ -608,7 +633,7 @@ var clickMod = setInterval( function(){
 				'<div class="listing"><b>Run started :</b> '+(startDate==''?'just now':(startDate+' ago'))+'</div>'+
 				'<div class="listing"><b>Buildings owned :</b> '+Beautify(buildingsOwned)+'</div>'+
 				'<div class="listing"><b>Cookies per second :</b> '+Beautify(Game.cookiesPs,1)+' <small>'+
-					'(multiplier : '+Beautify(Math.round(Game.globalCpsMult*100),1)+'%)'+'(cheat multiplier : '+Beautify(Math.round(secretMult*100),1)+'%)'+
+					'(multiplier : '+Beautify(Math.round(Game.globalCpsMult*100),1)+'%)'+'(cheat multiplier : '+Beautify(Math.round(secretMult*100),1)+'%)'+'(extra clicks per second: '+Beautify(Math.round(extraClicks/2),1)+')'+
 					(Game.cpsSucked>0?' <span class="warning">(withered : '+Beautify(Math.round(Game.cpsSucked*100),1)+'%)</span>':'')+
 					'</small></div>'+
 				'<div class="listing"><b>Cookies per click :</b> '+Beautify(Game.computedMouseCps,1)+'</div>'+

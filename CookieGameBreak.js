@@ -1,4 +1,4 @@
-//v2.03
+//v2.04
 	
 
 	var tempClicks = 0;
@@ -32,8 +32,7 @@ var initGame = function(){
 	};
 };
 
-var autoCps=function(power){
-		
+var autoCps=function(power){		
 	if(resetFlag==1){initGame();};
 	secretBrake*=Math.pow(1.001156,power);
 	secretMult*=Math.pow((1+secretAccel),power);
@@ -48,7 +47,6 @@ var autoCps=function(power){
 if (gameAge==0){
 	setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
 };
-
 	if (gameAge/1000/60/60>1){
 		var hoursPlayed=Math.round(gameAge/1000/60/60)
 		var brakeDouble=hoursPlayed*6;

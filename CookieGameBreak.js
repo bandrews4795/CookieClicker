@@ -1,4 +1,4 @@
-//v1.32
+//v1.33
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -26,6 +26,9 @@ var initGame = function(){
 	resetFlag = 0;
 	gameAge = 0;
 	tempAge = 0;
+	if (gameAge==0){
+		setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
+	};
 };
 
 var autoCps=function(power){
@@ -41,7 +44,6 @@ var autoCps=function(power){
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 };
 	
-	gameAge = (Date.now()-Game.startDate);
 	if (gameAge==0){
 		setTimeout(function(){gameAge = (Date.now()-Game.startDate);},1000);
 	};

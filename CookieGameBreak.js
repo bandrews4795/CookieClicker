@@ -1,4 +1,4 @@
-//v2.0	
+//v2.01	
 	
 
 	var tempClicks = 0;
@@ -117,41 +117,28 @@ var clickMod = setInterval(function(){
 	Game.cookieClicks+=extraClicks;
 	};
 	if(clicksBuff<=6)extraClicks=0;
-	};
-	
+	};	
 	if(tempClicks<Game.cookieClicks){
-
 		clicksPs = Game.cookieClicks - tempClicks;
 		tempClicks = Game.cookieClicks;
-		while(clicksPs>10){
+		if(clicksPs>0){
 			if (Game.canLumps){
-				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT);
-				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
+				Game.lumpT-=((0.10+lumpSpeed)*clicksPs)*(Date.now()-Game.lumpT);
+				Game.lumpRefill-=clicksPs*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};
-			secretBrake*=Math.pow(1.002777,10);
-			secretMult*=Math.pow(1.002777,10);
-			clicksPs-=10;
-		};
-		while(clicksPs>0){
-			if (Game.canLumps){
-				Game.lumpT-=(0.10+lumpSpeed)*(Date.now()-Game.lumpT);
-				Game.lumpRefill-=(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
-			};
-			secretBrake*=1.002777;
-			secretMult*=1.002777; //doubles every 250 clicks
+			secretBrake*=Math.pow(1.002777,clicksPs);
+			secretMult*=Math.pow(1.002777,clicksPs);
 			Game.shimmerTypes.golden.time*=(1.1+lumpSpeed);
-			Game.startDate-=1000;
+			Game.startDate-=1000*clicksPs;
 			if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= (1.1+lumpSpeed);}
-			clicksPs--;
-		}
+			clicksPs=0;
+		};
 		Game.recalculateGains = 1;
 	};
 	if(tempClicks>Game.cookieClicks){
 		resetFlag = 1;
 		tempClicks = Game.cookieClicks;
-	};
-	
-	
+	};		
 },34);
 
 

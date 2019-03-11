@@ -1,4 +1,4 @@
-//v1.22
+//v1.23
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -60,9 +60,18 @@ var autoCps=function(power){
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
 	};
 	gameAge = (Date.now()-Game.startDate);
-	while(gameAge-tempAge>=10000){
-		autoCps(10);
-		tempAge+=10000;
+	if (gameAge/1000/60/60>1){
+		var hoursPlayed=Math.round(gameAge/1000/60/60)
+		var brakeDouble=hoursPlayed*6;
+		var multDouble=hoursPlayed*12;
+		secretBrake*=Math.pow(2,brakeDouble);
+		secretMult*=Math.pow(2,multDouble);
+		if (secretMult>secretBrake){secretMult=secretBrake;};
+		tempAge+=hoursPlayed*60*60*1000;
+	};
+	while(gameAge-tempAge>=20000){
+		autoCps(20);
+		tempAge+=20000;
 		//tempAge=(Math.round((gameAge/1000)/500)*1000*500);
 	};
 	clicksPs = Game.cookieClicks - tempClicks;

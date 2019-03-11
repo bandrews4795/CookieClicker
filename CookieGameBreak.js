@@ -1,4 +1,4 @@
-//v1.25
+//v1.26
 	
 	var tempClicks = 0;
 	var clicksPs = 0;
@@ -27,38 +27,22 @@ var initGame = function(){
 	gameAge = 0;
 	tempAge = 0;
 };
-//var lumpCheat = function(lumpAccel){
-	//var tempLump = Game.lumpT;
-	//Game.lumpT=Game.lumpT-(lumpAccel*(Date.now()-Game.lumpT));
-	//if (tempLump==Game.lumpT){lumpCheat(lumpAccel);};		
-//};
 
 var autoCps=function(power){
 		
-		if(resetFlag==1){initGame();};
-	
-		if(secretMult<(secretBrake/1000)){
-			secretBrake+=secretMult*power;
-		};
-		if(secretMult>(secretBrake/1000)) {
-			//This doubles every 600 ticks
-			secretBrake*=Math.pow(1.001156,power);
-		};
-		if(Math.pow(secretMult*(1+secretAccel),power)<secretBrake){
-			secretMult*=Math.pow((1+secretAccel),power);
-		};
-		if(Game.shimmerTypes.golden.time < Game.shimmerTypes.golden.maxTime){
-			Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
-		};
-		if(Game.cookiesPs<0.1){
-			Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;
-		};
-		if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
-		//if (Game.canLumps){lumpCheat(0.05*power);};
-		Game.recalculateGains=1;
+	if(resetFlag==1){initGame();};
+	secretBrake*=Math.pow(1.001156,power);
+	secretMult*=Math.pow((1+secretAccel),power);
+	if (secretMult>secretBrake){secretMult=secretBrake;};
+	Game.shimmerTypes.golden.time*=Math.pow(1+secretAccel,power);
+	if(Game.cookiesPs<0.1){
+		Game.shimmerTypes.golden.time+=0.005555556*Game.shimmerTypes.golden.maxTime*power;
+	};
+	if (Game.season=='christmas'){Game.shimmerTypes.reindeer.time *= 1 + secretAccel;};
+	Game.recalculateGains=1;
 		//Game.lumpRefill=Date.now()-Game.getLumpRefillMax();
 		//for (i = 0; i < Game.wrinklers.length; i++) { Game.wrinklers[i].phase = 1; };
-	};
+};
 	gameAge = (Date.now()-Game.startDate);
 	if (gameAge/1000/60/60>1){
 		var hoursPlayed=Math.round(gameAge/1000/60/60)
@@ -106,7 +90,6 @@ var clickMod = setInterval( function(){
 		tempClicks = Game.cookieClicks;
 		while(clicksPs-10>=0){
 			if (Game.canLumps){
-				//lumpCheat(((0.10+lumpSpeed)*10));
 				Game.lumpT-=((0.10+lumpSpeed)*10)*(Date.now()-Game.lumpT);
 				Game.lumpRefill-=10*(0.10+lumpSpeed)*(Date.now()-Game.lumpRefill);
 			};

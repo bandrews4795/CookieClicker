@@ -1,4 +1,4 @@
-//v1.21
+//v1.22
 	
 	var tempClicks = 0;
 	var clicksPs = 0;

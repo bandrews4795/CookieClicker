@@ -1,4 +1,4 @@
-//v2.02
+//v2.03
 	
 
 	var tempClicks = 0;
@@ -70,11 +70,11 @@ if (gameAge==0){
 		clicksPs-=(Math.round(clicksPs/1000))*1000;
 		Game.lumpT-=((0.10+lumpSpeed)*Math.round(clicksPs/1000)*1000)*(Date.now()-Game.lumpT)
 	};
-	while(clicksPs>100){
-		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*100)*(Date.now()-Game.lumpT);};
-		secretBrake*=Math.pow(1.002777,100);
-		secretMult*=Math.pow(1.002777,100);
-		clicksPs-=100;
+	while(clicksPs>50){
+		if (Game.canLumps){Game.lumpT-=((0.10+lumpSpeed)*50)*(Date.now()-Game.lumpT);};
+		secretBrake*=Math.pow(1.002777,50);
+		secretMult*=Math.pow(1.002777,50);
+		clicksPs-=50;
 	};
 	if(clicksPs>0){
 		if (Game.canLumps){

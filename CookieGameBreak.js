@@ -1,4 +1,4 @@
-//v2.05
+//v2.06
 	
 
 	var tempClicks = 0;
@@ -115,19 +115,23 @@ var extraClicks=0
 var clickMod = setInterval(function(){
 	
 	if(Date.now()-tempTime<2000){
-	clicksPer+=Game.cookieClicks - tempClicks;
+		clicksPer+=Game.cookieClicks - tempClicks;
 	};
 	if(Date.now()-tempTime>=2000){
-	clicksBuff-=clickDecay;
-	clickDecay=clicksPer;
-	clicksBuff+=clicksPer;
-	if (clicksPer>0)clicksPer=0;
-	tempTime=Date.now();
-	if(clicksBuff>6){
-	extraClicks=clicksBuff-6;
-	Game.cookieClicks+=extraClicks;
-	};
-	if(clicksBuff<=6)extraClicks=0;
+		clicksBuff-=clickDecay;
+		clickDecay=clicksPer;
+		clicksBuff+=clicksPer;
+		if (clicksPer>0)clicksPer=0;
+		tempTime=Date.now();
+		if(clicksBuff>8){
+			extraClicks=clicksBuff-8;
+			//Game.cookieClicks+=extraClicks;
+			for(i=0; i<extraClicks;i++){
+				Game.clickCookie();
+				Game.lastClick = 0;
+			};
+		};
+		if(clicksBuff<=8)extraClicks=0;
 	};	
 	if(tempClicks<Game.cookieClicks){
 		clicksPs = Game.cookieClicks - tempClicks;

@@ -1,4 +1,4 @@
-//v2.07
+//v2.08
 	
 
 	var tempClicks = 0;
@@ -127,7 +127,7 @@ var clickMod = setInterval(function(){
 			extraClicks=clicksBuff-8;
 			//Game.cookieClicks+=extraClicks;
 			for(i=0; i<extraClicks;i++){
-				Game.clickCookie();
+				Game.ClickCookie();
 				Game.lastClick = 0;
 			};
 		};

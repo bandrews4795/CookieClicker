@@ -2,100 +2,110 @@ var GameCompressor = {};
 
 GameCompressor.init = function() {
     // ============================================
-    // --- CONFIGURATION (BALANCED FOR AUTO-CLICKERS) ---
+    // --- CONFIGURATION ---
     // ============================================
     
     var config = {
-        // --- MULTIPLIER (The Passive Buff) ---
-        // Your CpS grows by this factor every X real-time seconds.
-        // Kept separate from time-warp to prevent immediate math overflow.
-        growthFactor: 1.5, 
-        secondsToReach: 600, // Every 10 minutes, multiply CpS by 1.5x
-        maxMultiplier: 1000000000, // Cap at 1 Billion x
+        // --- 1. THE MULTIPLIER (Polynomial / "Legacy" Style) ---
+        // Formula: (Total Hours Played / Divisor) ^ Power
+        // 3600 divisor + 2.2 power = Balanced progression.
+        timeUnitDivisor: 3600, 
+        exponent: 2.2, 
+        
+        // --- 2. THE TIME SKIP (Safe Mode) ---
+        // How many seconds of "Waiting" to skip per click.
+        // Lowered to 0.5 for stability. 
+        // 0.5 * 30 clicks/sec = 15x Speed on Lumps/Research.
+        secondsSkippedPerClick: 0.5,
 
-        // --- TIME WARP (The Active Buff) ---
-        // Assuming 30 clicks/second from your bot:
-        // 2.0 = 60x Speed (1 Real Min = 1 Game Hour)
-        // 0.5 = 15x Speed (1 Real Min = 15 Game Mins)
-        secondsSkippedPerClick: 2.0,
-
-        // --- AUTOMATION ---
-        // Since lumps ripen fast, we must auto-harvest them 
-        // to prevent waste.
-        autoHarvestLumps: true 
+        // --- 3. SAFETY SWITCHES ---
+        // Auto-Harvest Lumps? (Highly Recommended)
+        autoHarvestLumps: true,
+        
+        // If TRUE, we strictly avoid touching Global Time to protect achievements.
+        // If FALSE, we warp everything (Riskier).
+        protectAchievements: true 
     };
 
     // ============================================
-    // --- ENGINE & STATE ---
+    // --- ENGINE ---
     // ============================================
     
-    var totalTicks = config.secondsToReach * 30;
-    var perTickRate = Math.pow(config.growthFactor, 1 / totalTicks);
-
-    this.secretMult = 1;
+    this.currentMult = 1;
     this.simulatedSpeed = 0;
-    this.clickTracker = 0; // To calculate speed for HUD
+    this.clickTracker = 0;
+
+    // --- HELPER: Get Multiplier based on Save Age ---
+    this.getMult = function() {
+        var totalSeconds = (Date.now() - Game.fullDate) / 1000;
+        if (totalSeconds < 1) totalSeconds = 1;
+        var units = totalSeconds / config.timeUnitDivisor;
+        var mult = Math.pow(units, config.exponent);
+        return (mult < 1) ? 1 : mult;
+    };
 
     // --- 1. LOGIC LOOP (30fps) ---
     Game.registerHook('logic', function() {
-        
-        // A. Passive Multiplier Growth (Real-time based)
-        GameCompressor.secretMult *= perTickRate;
-        if (GameCompressor.secretMult > config.maxMultiplier) {
-            GameCompressor.secretMult = config.maxMultiplier;
-        }
+        // Update Multiplier
+        GameCompressor.currentMult = GameCompressor.getMult();
 
-        // B. Speedometer Reset
-        // Every second (roughly 30 ticks), reset the click tracker
+        // Speedometer Reset (Every 30 ticks = 1 second)
         if (Game.time % 30 == 0) {
-            // Clicks this sec * Skipped time = Game Seconds per Real Second
             GameCompressor.simulatedSpeed = GameCompressor.clickTracker * config.secondsSkippedPerClick;
             GameCompressor.clickTracker = 0;
-        }
 
-        // C. Auto-Harvest Lumps
-        if (config.autoHarvestLumps && Game.time % 30 == 0) { // Check once a second
-            var age = Date.now() - Game.lumpT;
-            if (age > Game.lumpMature && Game.lumpCurrentType == 0) {
-                 // Normal lumps: harvest immediately when mature
-                 Game.clickLump();
-            } else if (age > Game.lumpOverripe) {
-                 // Special lumps (bifurcated/meaty): Wait until ripe to avoid botching
-                 Game.clickLump();
+            // Auto-Harvest Logic
+            if (config.autoHarvestLumps) {
+                var age = Date.now() - Game.lumpT;
+                // Harvest Mature (Type 0 = Normal)
+                if (age > Game.lumpMature && Game.lumpCurrentType == 0) Game.clickLump();
+                // Harvest Overripe (Special Lumps)
+                else if (age > Game.lumpOverripe) Game.clickLump();
             }
         }
     });
 
-    // --- 2. CLICK HOOK (The Engine) ---
+    // --- 2. CLICK HOOK (Selective Time Warp) ---
     Game.registerHook('click', function() {
-        GameCompressor.clickTracker++; // Track for speedometer
+        GameCompressor.clickTracker++;
+        var timeToSkip = config.secondsSkippedPerClick * 1000; // ms conversion
+        var framesToSkip = (timeToSkip / 1000) * 30; // frame conversion
 
-        var timeToSkip = config.secondsSkippedPerClick * 1000; // ms
+        // --- SAFE ZONE: Only touch "Waiting" variables ---
         
-        // A. Accelerate Lumps
+        // 1. Sugar Lumps (Safe)
         if (Game.canLumps()) {
             Game.lumpT -= timeToSkip;
         }
 
-        // B. Accelerate Research & Pledges (Frames)
-        var framesToSkip = (timeToSkip / 1000) * 30;
-        if (Game.researchT > 0) Game.researchT -= framesToSkip;
-        if (Game.pledgeT > 0) Game.pledgeT -= framesToSkip;
-        if (Game.wrinklerRespawns > 0) Game.wrinklerRespawns -= framesToSkip;
-        
-        // C. Accelerate Buffs (Optional)
-        // If you want Frenzies to last longer relative to game time, do nothing.
-        // If you want Frenzies to expire fast like the rest of the world, uncomment this:
-        /*
-        for (var i in Game.buffs) {
-            if (Game.buffs[i].time > 0) Game.buffs[i].time -= framesToSkip;
+        // 2. Research Timer (Safe)
+        // Only skip if research is actively happening
+        if (Game.researchT > 0) {
+            Game.researchT -= framesToSkip;
         }
-        */
+
+        // 3. Pledge Timer (Grandmapocalypse) (Safe)
+        if (Game.pledgeT > 0) {
+            Game.pledgeT -= framesToSkip;
+        }
+
+        // 4. Wrinkler Spawns (Safe)
+        if (Game.wrinklerRespawns > 0) {
+            Game.wrinklerRespawns -= framesToSkip;
+        }
+
+        // --- DANGER ZONE: Things we intentionally DO NOT touch ---
+        if (!config.protectAchievements) {
+            // These are only modified if you disable protection.
+            // Modifying these can break "Golden Cookie" spawns and "Just Plain Lucky".
+            // Game.shimmerTypes.golden.time -= framesToSkip; 
+            // Game.buffs...
+        }
     });
 
     // --- 3. CPS INJECTION ---
     Game.registerHook('cps', function(cps) {
-        return cps * GameCompressor.secretMult;
+        return cps * GameCompressor.currentMult;
     });
 
     // --- 4. HUD DISPLAY ---
@@ -107,30 +117,25 @@ GameCompressor.init = function() {
                 if (el.innerHTML.indexOf('Cookies per second') !== -1) {
                     var cheatSpan = document.getElementById('compressor-display');
                     
-                    // Format the Multiplier
-                    var multText = Beautify(Math.round(GameCompressor.secretMult * 100));
-                    
-                    // Format the Speed
-                    // If speed is 0 (idle), show 1x (Normal Speed)
-                    var speedVal = GameCompressor.simulatedSpeed < 1 ? 1 : Math.round(GameCompressor.simulatedSpeed);
-                    var speedColor = speedVal > 50 ? '#ff0000' : '#00ff00';
+                    var multText = Beautify(Math.round(GameCompressor.currentMult * 100));
+                    var speedVal = Math.round(GameCompressor.simulatedSpeed);
                     
                     var hudHTML = `
                         <div style="
-                            background: rgba(0,0,0,0.2); 
-                            border: 1px solid #444; 
-                            border-radius: 4px; 
-                            padding: 5px; 
-                            margin-top: 5px; 
+                            background: rgba(0, 0, 0, 0.5); 
+                            border-left: 4px solid #00ff00; 
+                            padding: 4px 8px; 
+                            margin-top: 6px; 
+                            font-family: monospace;
                             font-size: 11px; 
-                            color: #ccc;
+                            color: #aaa;
                             width: fit-content;">
-                            <div style="border-bottom: 1px solid #555; margin-bottom: 3px; padding-bottom: 2px;">
-                                <b>GAME COMPRESSOR v5</b>
+                            <div style="color: #fff; font-weight: bold; margin-bottom: 2px;">
+                                LEGACY MOD v7 (Safe Mode)
                             </div>
-                            <div>Multiplier: <span style="color:#f0f; font-weight:bold;">${multText}%</span></div>
-                            <div>Sim Speed: <span style="color:${speedColor}; font-weight:bold;">${speedVal}x</span></div>
-                            <div style="font-size:9px; color:#666;">(Autosaving Lumps: ${config.autoHarvestLumps ? 'ON' : 'OFF'})</div>
+                            <div>Mult: <span style="color:#f0f; font-weight:bold;">${multText}%</span></div>
+                            <div>Warp Speed: <span style="color:#00ff00; font-weight:bold;">${speedVal}x</span></div>
+                            <div style="font-size:9px; margin-top:2px;">(Achievements Protected)</div>
                         </div>
                     `;
 
@@ -150,7 +155,7 @@ GameCompressor.init = function() {
         }
     }, 1000);
 
-    console.log("Game Compressor v5 Loaded. Ready for Auto-Clicker.");
+    console.log("Legacy Mod v7 (Safe Mode) Loaded.");
 };
 
 GameCompressor.init();

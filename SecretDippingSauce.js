@@ -14,7 +14,8 @@ GameCompressor.init = function() {
         shinyHunter: true,
         luckyBreaks: true,
         autoHarvestLumps: true,
-        protectAchievements: true 
+        protectAchievements: true,
+        neverClickMode: false // New Toggle
     };
 
     // ============================================
@@ -41,7 +42,7 @@ GameCompressor.init = function() {
     // --- Header ---
     var header = document.createElement('div');
     header.style.cssText = "padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;";
-    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v9</b>';
+    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v9.1</b>';
     
     var settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = "⚙";
@@ -120,6 +121,7 @@ GameCompressor.init = function() {
     settingsPanel.appendChild(createToggle("Shiny Hunter", "shinyHunter"));
     settingsPanel.appendChild(createToggle("Lucky Breaks", "luckyBreaks"));
     settingsPanel.appendChild(createToggle("Safe Mode", "protectAchievements"));
+    settingsPanel.appendChild(createToggle("Neverclick Mode", "neverClickMode")); // Added Toggle
 
     hud.appendChild(settingsPanel);
     document.body.appendChild(hud);
@@ -171,6 +173,17 @@ GameCompressor.init = function() {
             Game.lumpCurrentType = (Math.random() < 0.5) ? 1 : 4;
             if (Game.lumpRef) Game.lumpRef.className = 'lump lump-'+Game.lumpCurrentType;
         }
+
+        // --- NEW NEVERCLICK LOGIC ---
+        if (config.neverClickMode) {
+             var cursor = Game.Objects['Cursor'];
+             // Only active if we have 0 cursors and cannot afford one yet
+             if (cursor.amount == 0 && Game.cookies < cursor.getPrice()) {
+                 // Accelerate golden cookie spawn drastically
+                 // Adds 100 frames (~3.3s) to the timer per tick
+                 Game.shimmerTypes.golden.time += 100;
+             }
+        }
     });
 
     Game.registerHook('click', function() {
@@ -215,12 +228,13 @@ GameCompressor.init = function() {
                 ${c(config.goldenTrigger, 'GOLD')} | 
                 ${c(config.shinyHunter, 'HUNT')} | 
                 ${c(config.perfectMagic, 'MAGIC')} | 
-                ${c(config.gardenGrover, 'GARDEN')}
+                ${c(config.gardenGrover, 'GARDEN')} |
+                ${c(config.neverClickMode, 'NEVERCLICK')}
             `;
         }
     }, 500);
 
-    console.log("Legacy Mod v9.0 (Interactive) Loaded.");
+    console.log("Legacy Mod v9.1 (Neverclick Edition) Loaded.");
 };
 
 GameCompressor.init();

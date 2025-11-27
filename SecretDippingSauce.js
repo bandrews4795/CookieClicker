@@ -2,28 +2,38 @@ var GameCompressor = {};
 
 GameCompressor.init = function() {
     // ============================================
-    // --- CONFIGURATION ---
+    // --- CONFIGURATION: FUN MODE ---
     // ============================================
     
     var config = {
-        // --- 1. THE MULTIPLIER (Polynomial / "Legacy" Style) ---
+        // --- 1. CORE MULTIPLIER (Legacy Strength) ---
         // Formula: (Total Hours Played / Divisor) ^ Power
-        // 3600 divisor + 2.2 power = Balanced progression.
         timeUnitDivisor: 3600, 
         exponent: 2.2, 
         
-        // --- 2. THE TIME SKIP (Safe Mode) ---
-        // How many seconds of "Waiting" to skip per click.
-        // Lowered to 0.5 for stability. 
-        // 0.5 * 30 clicks/sec = 15x Speed on Lumps/Research.
-        secondsSkippedPerClick: 0.5,
+        // --- 2. TIME WARP (The Engine) ---
+        secondsSkippedPerClick: 0.5, // 0.5s skip per click (15x speed at 30cps)
 
-        // --- 3. SAFETY SWITCHES ---
-        // Auto-Harvest Lumps? (Highly Recommended)
-        autoHarvestLumps: true,
+        // --- 3. FUN MODE FEATURES (The New Stuff) ---
         
-        // If TRUE, we strictly avoid touching Global Time to protect achievements.
-        // If FALSE, we warp everything (Riskier).
+        // "Golden Trigger": Clicking reduces Golden Cookie spawn timer?
+        // (WARNING: Causes massive buff stacking)
+        goldenTrigger: true, 
+
+        // "Garden Grover": Clicking speeds up Garden plant growth?
+        gardenGrover: true,
+
+        // "Perfect Magic": Force Grimoire spells to NEVER fail/backfire?
+        perfectMagic: true,
+
+        // "Shiny Hunter": Instantly pop Normal wrinklers, Protect Shiny ones?
+        shinyHunter: true,
+
+        // "Lucky Breaks": Force 'Botched' lumps to be 'Golden' or 'Bifurcated'?
+        luckyBreaks: true,
+        
+        // --- 4. BASICS ---
+        autoHarvestLumps: true,
         protectAchievements: true 
     };
 
@@ -35,7 +45,7 @@ GameCompressor.init = function() {
     this.simulatedSpeed = 0;
     this.clickTracker = 0;
 
-    // --- HELPER: Get Multiplier based on Save Age ---
+    // --- HELPER: Multiplier Calc ---
     this.getMult = function() {
         var totalSeconds = (Date.now() - Game.fullDate) / 1000;
         if (totalSeconds < 1) totalSeconds = 1;
@@ -46,60 +56,82 @@ GameCompressor.init = function() {
 
     // --- 1. LOGIC LOOP (30fps) ---
     Game.registerHook('logic', function() {
-        // Update Multiplier
+        // A. Multiplier
         GameCompressor.currentMult = GameCompressor.getMult();
 
-        // Speedometer Reset (Every 30 ticks = 1 second)
+        // B. Speedometer
         if (Game.time % 30 == 0) {
             GameCompressor.simulatedSpeed = GameCompressor.clickTracker * config.secondsSkippedPerClick;
             GameCompressor.clickTracker = 0;
 
-            // Auto-Harvest Logic
+            // Auto-Harvest Lumps
             if (config.autoHarvestLumps) {
                 var age = Date.now() - Game.lumpT;
-                // Harvest Mature (Type 0 = Normal)
                 if (age > Game.lumpMature && Game.lumpCurrentType == 0) Game.clickLump();
-                // Harvest Overripe (Special Lumps)
                 else if (age > Game.lumpOverripe) Game.clickLump();
+            }
+        }
+
+        // C. Shiny Hunter (Logic Tick)
+        if (config.shinyHunter && Game.wrinklers) {
+            Game.wrinklers.forEach(function(w) {
+                // Type 0 = Normal, Type 1 = Shiny
+                // If it's Normal and close enough to be popped
+                if (w.phase == 2 && w.type == 0) {
+                    w.hp = 0; // Instant Pop
+                }
+            });
+        }
+
+        // D. Perfect Magic (Grimoire Hack)
+        if (config.perfectMagic) {
+            var wizard = Game.Objects['Wizard tower'];
+            if (wizard.minigameLoaded && wizard.minigame) {
+                // Override the fail chance function constantly
+                wizard.minigame.getFailChance = function(spell) { return 0; };
+            }
+        }
+
+        // E. Lucky Breaks (Lump RNG Manipulation)
+        if (config.luckyBreaks) {
+            // Type 3 is Botched (Bad). Type 4 is Golden (Good). Type 1 is Bifurcated (Good).
+            if (Game.lumpCurrentType == 3) {
+                // Flip a coin for Golden or Bifurcated
+                Game.lumpCurrentType = (Math.random() < 0.5) ? 1 : 4;
+                // Force a redraw of the lump icon
+                if (Game.lumpRef) Game.lumpRef.className = 'lump lump-'+Game.lumpCurrentType;
             }
         }
     });
 
-    // --- 2. CLICK HOOK (Selective Time Warp) ---
+    // --- 2. CLICK HOOK (The Fun Mode Triggers) ---
     Game.registerHook('click', function() {
         GameCompressor.clickTracker++;
-        var timeToSkip = config.secondsSkippedPerClick * 1000; // ms conversion
-        var framesToSkip = (timeToSkip / 1000) * 30; // frame conversion
+        var timeToSkip = config.secondsSkippedPerClick * 1000; // ms
+        var framesToSkip = (timeToSkip / 1000) * 30; // frames
 
-        // --- SAFE ZONE: Only touch "Waiting" variables ---
-        
-        // 1. Sugar Lumps (Safe)
-        if (Game.canLumps()) {
-            Game.lumpT -= timeToSkip;
+        // 1. Standard Safe Warps (Lumps, Research, Pledges, Wrinklers)
+        if (Game.canLumps()) Game.lumpT -= timeToSkip;
+        if (Game.researchT > 0) Game.researchT -= framesToSkip;
+        if (Game.pledgeT > 0) Game.pledgeT -= framesToSkip;
+        if (Game.wrinklerRespawns > 0) Game.wrinklerRespawns -= framesToSkip;
+
+        // 2. The Golden Trigger (Modifies Golden Cookie Spawn Time)
+        if (config.goldenTrigger) {
+             // We only subtract time if we are waiting for one to spawn
+             // (shimmerTypes.golden.time is the counter UP to maxTime)
+             // Actually in code: time increases until it hits maxTime.
+             Game.shimmerTypes.golden.time += framesToSkip;
         }
 
-        // 2. Research Timer (Safe)
-        // Only skip if research is actively happening
-        if (Game.researchT > 0) {
-            Game.researchT -= framesToSkip;
-        }
-
-        // 3. Pledge Timer (Grandmapocalypse) (Safe)
-        if (Game.pledgeT > 0) {
-            Game.pledgeT -= framesToSkip;
-        }
-
-        // 4. Wrinkler Spawns (Safe)
-        if (Game.wrinklerRespawns > 0) {
-            Game.wrinklerRespawns -= framesToSkip;
-        }
-
-        // --- DANGER ZONE: Things we intentionally DO NOT touch ---
-        if (!config.protectAchievements) {
-            // These are only modified if you disable protection.
-            // Modifying these can break "Golden Cookie" spawns and "Just Plain Lucky".
-            // Game.shimmerTypes.golden.time -= framesToSkip; 
-            // Game.buffs...
+        // 3. Garden Grover (Speeds up Garden Ticks)
+        if (config.gardenGrover) {
+            var farm = Game.Objects['Farm'];
+            if (farm.minigameLoaded && farm.minigame) {
+                // M.nextStep is the timestamp (Date.now()) when the next tick happens.
+                // We lower this timestamp effectively bringing the future closer.
+                farm.minigame.nextStep -= timeToSkip;
+            }
         }
     });
 
@@ -122,20 +154,26 @@ GameCompressor.init = function() {
                     
                     var hudHTML = `
                         <div style="
-                            background: rgba(0, 0, 0, 0.5); 
-                            border-left: 4px solid #00ff00; 
-                            padding: 4px 8px; 
+                            background: linear-gradient(90deg, rgba(0,0,0,0.5), rgba(50,0,50,0.5)); 
+                            border-left: 4px solid #ffcc00; 
+                            padding: 5px 10px; 
                             margin-top: 6px; 
                             font-family: monospace;
                             font-size: 11px; 
-                            color: #aaa;
+                            color: #ccc;
+                            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
                             width: fit-content;">
-                            <div style="color: #fff; font-weight: bold; margin-bottom: 2px;">
-                                LEGACY MOD v7 (Safe Mode)
+                            <div style="color: #ffcc00; font-weight: bold; margin-bottom: 3px; border-bottom:1px solid #555;">
+                                LEGACY MOD v8 (FUN MODE)
                             </div>
                             <div>Mult: <span style="color:#f0f; font-weight:bold;">${multText}%</span></div>
-                            <div>Warp Speed: <span style="color:#00ff00; font-weight:bold;">${speedVal}x</span></div>
-                            <div style="font-size:9px; margin-top:2px;">(Achievements Protected)</div>
+                            <div>Warp: <span style="color:#00ff00; font-weight:bold;">${speedVal}x</span></div>
+                            <div style="font-size:9px; color:#888; margin-top:3px;">
+                                [${config.goldenTrigger ? 'GOLD' : '-'}] 
+                                [${config.shinyHunter ? 'SHINY' : '-'}] 
+                                [${config.perfectMagic ? 'MAGIC' : '-'}]
+                                [${config.gardenGrover ? 'GARDEN' : '-'}]
+                            </div>
                         </div>
                     `;
 
@@ -155,7 +193,7 @@ GameCompressor.init = function() {
         }
     }, 1000);
 
-    console.log("Legacy Mod v7 (Safe Mode) Loaded.");
+    console.log("Legacy Mod v8 (Fun Mode) Loaded.");
 };
 
 GameCompressor.init();

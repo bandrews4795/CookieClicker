@@ -2,50 +2,136 @@ var GameCompressor = {};
 
 GameCompressor.init = function() {
     // ============================================
-    // --- CONFIGURATION: FUN MODE ---
+    // --- 1. CONFIGURATION (Default Values) ---
     // ============================================
-    
     var config = {
-        // --- 1. CORE MULTIPLIER (Legacy Strength) ---
-        // Formula: (Total Hours Played / Divisor) ^ Power
         timeUnitDivisor: 3600, 
         exponent: 2.2, 
-        
-        // --- 2. TIME WARP (The Engine) ---
-        secondsSkippedPerClick: 0.5, // 0.5s skip per click (15x speed at 30cps)
-
-        // --- 3. FUN MODE FEATURES (The New Stuff) ---
-        
-        // "Golden Trigger": Clicking reduces Golden Cookie spawn timer?
-        // (WARNING: Causes massive buff stacking)
-        goldenTrigger: true, 
-
-        // "Garden Grover": Clicking speeds up Garden plant growth?
+        secondsSkippedPerClick: 0.5,
+        goldenTrigger: true,
         gardenGrover: true,
-
-        // "Perfect Magic": Force Grimoire spells to NEVER fail/backfire?
         perfectMagic: true,
-
-        // "Shiny Hunter": Instantly pop Normal wrinklers, Protect Shiny ones?
         shinyHunter: true,
-
-        // "Lucky Breaks": Force 'Botched' lumps to be 'Golden' or 'Bifurcated'?
         luckyBreaks: true,
-        
-        // --- 4. BASICS ---
         autoHarvestLumps: true,
         protectAchievements: true 
     };
 
     // ============================================
-    // --- ENGINE ---
+    // --- 2. UI CONSTRUCTION (Run Once) ---
+    // ============================================
+    
+    // Remove old HUD if exists
+    if (document.getElementById('legacy-mod-hud')) {
+        document.getElementById('legacy-mod-hud').remove();
+    }
+
+    var hud = document.createElement('div');
+    hud.id = "legacy-mod-hud";
+    hud.style.cssText = `
+        position: fixed; top: 0; right: 0; z-index: 100000; 
+        background: rgba(10, 10, 10, 0.95); 
+        border-left: 2px solid #ffcc00; border-bottom: 2px solid #ffcc00; 
+        border-bottom-left-radius: 8px; color: #ccc; 
+        font-family: 'Tahoma', sans-serif; font-size: 11px; 
+        box-shadow: -2px 2px 10px rgba(0,0,0,0.5);
+        display: flex; flex-direction: column; width: 220px;
+    `;
+
+    // --- Header ---
+    var header = document.createElement('div');
+    header.style.cssText = "padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;";
+    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v9</b>';
+    
+    var settingsBtn = document.createElement('button');
+    settingsBtn.innerHTML = "⚙";
+    settingsBtn.style.cssText = "background:none; border:none; color:#fff; cursor:pointer; font-size:14px;";
+    settingsBtn.onclick = function() {
+        var p = document.getElementById('legacy-settings-panel');
+        p.style.display = (p.style.display === 'none') ? 'block' : 'none';
+    };
+    header.appendChild(settingsBtn);
+    hud.appendChild(header);
+
+    // --- Stats Display ---
+    var statsPanel = document.createElement('div');
+    statsPanel.style.padding = "8px";
+    statsPanel.innerHTML = `
+        <div style="margin-bottom:4px;">Multiplier: <span id="leg-mult" style="color:#f0f; font-weight:bold;">100%</span></div>
+        <div style="margin-bottom:4px;">Warp Speed: <span id="leg-speed" style="color:#0f0; font-weight:bold;">0x</span></div>
+        <div id="leg-badges" style="font-size:9px; color:#666; margin-top:6px;">LOADING...</div>
+    `;
+    hud.appendChild(statsPanel);
+
+    // --- Settings Panel (Hidden by default) ---
+    var settingsPanel = document.createElement('div');
+    settingsPanel.id = "legacy-settings-panel";
+    settingsPanel.style.cssText = "padding: 8px; background: rgba(30,30,30,0.5); border-top: 1px solid #444; display: none;";
+    
+    // Helper to create toggle
+    function createToggle(label, key) {
+        var row = document.createElement('div');
+        row.style.marginBottom = "4px";
+        var chk = document.createElement('input');
+        chk.type = "checkbox";
+        chk.checked = config[key];
+        chk.style.marginRight = "6px";
+        chk.onchange = function() { config[key] = chk.checked; };
+        
+        var lbl = document.createElement('span');
+        lbl.innerText = label;
+        
+        row.appendChild(chk);
+        row.appendChild(lbl);
+        return row;
+    }
+
+    // Helper to create number input
+    function createInput(label, key, step) {
+        var row = document.createElement('div');
+        row.style.marginBottom = "4px";
+        row.style.display = "flex";
+        row.style.justifyContent = "space-between";
+        
+        var lbl = document.createElement('span');
+        lbl.innerText = label;
+        
+        var inp = document.createElement('input');
+        inp.type = "number";
+        inp.value = config[key];
+        inp.step = step;
+        inp.style.width = "50px";
+        inp.style.background = "#222";
+        inp.style.border = "1px solid #555";
+        inp.style.color = "#fff";
+        inp.onchange = function() { config[key] = parseFloat(inp.value); };
+
+        row.appendChild(lbl);
+        row.appendChild(inp);
+        return row;
+    }
+
+    settingsPanel.appendChild(createInput("Warp (Sec/Click)", "secondsSkippedPerClick", 0.1));
+    settingsPanel.appendChild(createInput("Difficulty Exp", "exponent", 0.1));
+    settingsPanel.appendChild(document.createElement('hr'));
+    settingsPanel.appendChild(createToggle("Golden Trigger", "goldenTrigger"));
+    settingsPanel.appendChild(createToggle("Garden Grover", "gardenGrover"));
+    settingsPanel.appendChild(createToggle("Perfect Magic", "perfectMagic"));
+    settingsPanel.appendChild(createToggle("Shiny Hunter", "shinyHunter"));
+    settingsPanel.appendChild(createToggle("Lucky Breaks", "luckyBreaks"));
+    settingsPanel.appendChild(createToggle("Safe Mode", "protectAchievements"));
+
+    hud.appendChild(settingsPanel);
+    document.body.appendChild(hud);
+
+    // ============================================
+    // --- 3. ENGINE LOGIC ---
     // ============================================
     
     this.currentMult = 1;
     this.simulatedSpeed = 0;
     this.clickTracker = 0;
 
-    // --- HELPER: Multiplier Calc ---
     this.getMult = function() {
         var totalSeconds = (Date.now() - Game.fullDate) / 1000;
         if (totalSeconds < 1) totalSeconds = 1;
@@ -54,17 +140,13 @@ GameCompressor.init = function() {
         return (mult < 1) ? 1 : mult;
     };
 
-    // --- 1. LOGIC LOOP (30fps) ---
     Game.registerHook('logic', function() {
-        // A. Multiplier
         GameCompressor.currentMult = GameCompressor.getMult();
 
-        // B. Speedometer
         if (Game.time % 30 == 0) {
             GameCompressor.simulatedSpeed = GameCompressor.clickTracker * config.secondsSkippedPerClick;
             GameCompressor.clickTracker = 0;
 
-            // Auto-Harvest Lumps
             if (config.autoHarvestLumps) {
                 var age = Date.now() - Game.lumpT;
                 if (age > Game.lumpMature && Game.lumpCurrentType == 0) Game.clickLump();
@@ -72,128 +154,73 @@ GameCompressor.init = function() {
             }
         }
 
-        // C. Shiny Hunter (Logic Tick)
         if (config.shinyHunter && Game.wrinklers) {
             Game.wrinklers.forEach(function(w) {
-                // Type 0 = Normal, Type 1 = Shiny
-                // If it's Normal and close enough to be popped
-                if (w.phase == 2 && w.type == 0) {
-                    w.hp = 0; // Instant Pop
-                }
+                if (w.phase == 2 && w.type == 0) w.hp = 0;
             });
         }
 
-        // D. Perfect Magic (Grimoire Hack)
         if (config.perfectMagic) {
             var wizard = Game.Objects['Wizard tower'];
             if (wizard.minigameLoaded && wizard.minigame) {
-                // Override the fail chance function constantly
-                wizard.minigame.getFailChance = function(spell) { return 0; };
+                wizard.minigame.getFailChance = function() { return 0; };
             }
         }
 
-        // E. Lucky Breaks (Lump RNG Manipulation)
-        if (config.luckyBreaks) {
-            // Type 3 is Botched (Bad). Type 4 is Golden (Good). Type 1 is Bifurcated (Good).
-            if (Game.lumpCurrentType == 3) {
-                // Flip a coin for Golden or Bifurcated
-                Game.lumpCurrentType = (Math.random() < 0.5) ? 1 : 4;
-                // Force a redraw of the lump icon
-                if (Game.lumpRef) Game.lumpRef.className = 'lump lump-'+Game.lumpCurrentType;
-            }
+        if (config.luckyBreaks && Game.lumpCurrentType == 3) {
+            Game.lumpCurrentType = (Math.random() < 0.5) ? 1 : 4;
+            if (Game.lumpRef) Game.lumpRef.className = 'lump lump-'+Game.lumpCurrentType;
         }
     });
 
-    // --- 2. CLICK HOOK (The Fun Mode Triggers) ---
     Game.registerHook('click', function() {
         GameCompressor.clickTracker++;
-        var timeToSkip = config.secondsSkippedPerClick * 1000; // ms
-        var framesToSkip = (timeToSkip / 1000) * 30; // frames
+        var timeToSkip = config.secondsSkippedPerClick * 1000; 
+        var framesToSkip = (timeToSkip / 1000) * 30;
 
-        // 1. Standard Safe Warps (Lumps, Research, Pledges, Wrinklers)
         if (Game.canLumps()) Game.lumpT -= timeToSkip;
         if (Game.researchT > 0) Game.researchT -= framesToSkip;
         if (Game.pledgeT > 0) Game.pledgeT -= framesToSkip;
         if (Game.wrinklerRespawns > 0) Game.wrinklerRespawns -= framesToSkip;
 
-        // 2. The Golden Trigger (Modifies Golden Cookie Spawn Time)
-        if (config.goldenTrigger) {
-             // We only subtract time if we are waiting for one to spawn
-             // (shimmerTypes.golden.time is the counter UP to maxTime)
-             // Actually in code: time increases until it hits maxTime.
-             Game.shimmerTypes.golden.time += framesToSkip;
-        }
-
-        // 3. Garden Grover (Speeds up Garden Ticks)
+        if (config.goldenTrigger) Game.shimmerTypes.golden.time += framesToSkip;
+        
         if (config.gardenGrover) {
             var farm = Game.Objects['Farm'];
-            if (farm.minigameLoaded && farm.minigame) {
-                // M.nextStep is the timestamp (Date.now()) when the next tick happens.
-                // We lower this timestamp effectively bringing the future closer.
-                farm.minigame.nextStep -= timeToSkip;
-            }
+            if (farm.minigameLoaded && farm.minigame) farm.minigame.nextStep -= timeToSkip;
         }
     });
 
-    // --- 3. CPS INJECTION ---
     Game.registerHook('cps', function(cps) {
         return cps * GameCompressor.currentMult;
     });
 
-    // --- 4. HUD DISPLAY ---
+    // ============================================
+    // --- 4. HUD UPDATE LOOP (Lightweight) ---
+    // ============================================
     setInterval(function() {
-        if (Game.onMenu == 'stats') {
-            var listings = document.getElementsByClassName('listing');
-            for (var i = 0; i < listings.length; i++) {
-                var el = listings[i];
-                if (el.innerHTML.indexOf('Cookies per second') !== -1) {
-                    var cheatSpan = document.getElementById('compressor-display');
-                    
-                    var multText = Beautify(Math.round(GameCompressor.currentMult * 100));
-                    var speedVal = Math.round(GameCompressor.simulatedSpeed);
-                    
-                    var hudHTML = `
-                        <div style="
-                            background: linear-gradient(90deg, rgba(0,0,0,0.5), rgba(50,0,50,0.5)); 
-                            border-left: 4px solid #ffcc00; 
-                            padding: 5px 10px; 
-                            margin-top: 6px; 
-                            font-family: monospace;
-                            font-size: 11px; 
-                            color: #ccc;
-                            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
-                            width: fit-content;">
-                            <div style="color: #ffcc00; font-weight: bold; margin-bottom: 3px; border-bottom:1px solid #555;">
-                                LEGACY MOD v8 (FUN MODE)
-                            </div>
-                            <div>Mult: <span style="color:#f0f; font-weight:bold;">${multText}%</span></div>
-                            <div>Warp: <span style="color:#00ff00; font-weight:bold;">${speedVal}x</span></div>
-                            <div style="font-size:9px; color:#888; margin-top:3px;">
-                                [${config.goldenTrigger ? 'GOLD' : '-'}] 
-                                [${config.shinyHunter ? 'SHINY' : '-'}] 
-                                [${config.perfectMagic ? 'MAGIC' : '-'}]
-                                [${config.gardenGrover ? 'GARDEN' : '-'}]
-                            </div>
-                        </div>
-                    `;
+        // Only update the text values, do NOT rebuild the HTML
+        var m = document.getElementById('leg-mult');
+        var s = document.getElementById('leg-speed');
+        var b = document.getElementById('leg-badges');
 
-                    if (!cheatSpan) {
-                        var smallTag = el.getElementsByTagName('small')[0];
-                        var container = document.createElement('div');
-                        container.id = "compressor-display";
-                        container.innerHTML = hudHTML;
-                        
-                        if (smallTag) smallTag.appendChild(container);
-                        else el.appendChild(container);
-                    } else {
-                        cheatSpan.innerHTML = hudHTML;
-                    }
-                }
-            }
+        if (m) m.innerText = Beautify(Math.round(GameCompressor.currentMult * 100)) + "%";
+        if (s) s.innerText = Math.round(GameCompressor.simulatedSpeed) + "x";
+        if (b) {
+            // Helper for color coding badges based on config state
+            var c = function(bool, text) { 
+                return `<span style="color:${bool ? '#fff' : '#444'}; font-weight:${bool?'bold':'normal'}">${text}</span>`; 
+            };
+            b.innerHTML = `
+                ${c(config.goldenTrigger, 'GOLD')} | 
+                ${c(config.shinyHunter, 'HUNT')} | 
+                ${c(config.perfectMagic, 'MAGIC')} | 
+                ${c(config.gardenGrover, 'GARDEN')}
+            `;
         }
-    }, 1000);
+    }, 500);
 
-    console.log("Legacy Mod v8 (Fun Mode) Loaded.");
+    console.log("Legacy Mod v9.0 (Interactive) Loaded.");
 };
 
 GameCompressor.init();

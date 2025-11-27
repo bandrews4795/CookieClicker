@@ -1,76 +1,132 @@
-// --- AUTO COOKIE BOT v3 (Smart Priority & Click Calc) ---
+// --- AUTO COOKIE BOT v4 (Combo Master) ---
 
 var AutoCookie = (function() {
     var config = {
-        clickSpeed: 33,      // ~30 clicks/second
-        buyInterval: 1000,   // Assess market every 1 second
-        shimmerInterval: 500 // Click golden cookies every 0.5s
+        clickSpeed: 33,        // ~30 clicks/second
+        buyInterval: 500,      // Market analysis speed
+        shimmerInterval: 500,  // Golden cookie speed
+        minigameInterval: 1000 // Check wizard towers/gardens
     };
 
     var intervals = {};
     
-    // --- UI SETUP ---
+    // UI SETUP (Simplified for v4)
     var hud = document.createElement('div');
-    hud.id = "autocookie-hud";
-    hud.style.cssText = "position: fixed; top: 0; left: 0; z-index: 100000; background: rgba(0,0,0,0.9); color: #fff; padding: 15px; font-family: monospace; font-size: 12px; border-bottom-right-radius: 8px; pointer-events: none; min-width: 300px; box-shadow: 0 0 10px #000;";
-    hud.innerHTML = "Initializing AutoCookie v3...";
+    hud.id = "autocookie-hud-v4";
+    hud.style.cssText = "position: fixed; top: 0; left: 0; z-index: 100000; background: linear-gradient(135deg, #222, #444); color: #fff; padding: 10px; font-family: 'Tahoma', sans-serif; font-size: 11px; border-bottom-right-radius: 8px; box-shadow: 2px 2px 15px rgba(0,0,0,0.5); min-width: 200px; opacity: 0.9;";
     document.body.appendChild(hud);
 
-    function updateHUD(action, targetName, type, payback, timeToBuy) {
-        var color = action === "BUYING" ? "#66ff66" : "#ffff66";
+    function updateHUD(status, target, detail, subdetail) {
         hud.innerHTML = `
-            <div style="font-weight:bold; color:#fff; border-bottom:1px solid #555; padding-bottom:5px; margin-bottom:5px;">[ SMART COOKIE BOT v3 ]</div>
-            <div><span style="color:#aaa;">Action:</span> <span style="font-weight:bold; color:${color}">${action}</span></div>
-            <div><span style="color:#aaa;">Target:</span> ${targetName}</div>
-            <div><span style="color:#aaa;">Type:</span> ${type}</div>
-            <div><span style="color:#aaa;">Est. ROI:</span> Pays off in ${payback}s</div>
-            <div style="margin-top:5px; border-top:1px solid #333; padding-top:5px;">
-                <span style="color:#aaa;">Wait Time:</span> ${timeToBuy}
-            </div>
+            <div style="font-weight:bold; color:#ffcc00; border-bottom:1px solid #666; padding-bottom:3px; margin-bottom:5px;">🤖 AUTO COOKIE v4</div>
+            <div style="display:flex; justify-content:space-between;"><span>Status:</span> <span style="font-weight:bold; color:${status === 'Active' ? '#6f6' : '#f66'}">${status}</span></div>
+            <div style="margin-top:4px; color:#ddd;">Target: <span style="color:#fff; font-weight:bold;">${target}</span></div>
+            <div style="font-size:10px; color:#aaa;">${detail}</div>
+            <div style="font-size:10px; color:#888; margin-top:2px;">${subdetail}</div>
         `;
     }
 
-    // 1. CLICKER (30/sec)
+    // 1. CLICKER
     function startClicking() {
         intervals.clicker = setInterval(function() {
-            try { Game.ClickCookie(); } catch (e) {}
+            try { 
+                Game.ClickCookie(); 
+                // Also click the news ticker occasionally for the achievement
+                if (Math.random() < 0.01 && Game.Ticker) Game.Ticker.click();
+            } catch (e) {}
         }, config.clickSpeed);
     }
 
-    // 2. GOLDEN COOKIES
-    function startShimmerClicker() {
+    // 2. SHIMMERS & WRINKLERS
+    function startShimmer() {
         intervals.shimmer = setInterval(function() {
-            try {
-                if (Game.shimmers.length > 0) {
-                    Game.shimmers.forEach(s => s.pop());
-                }
-            } catch (e) {}
+            // Pop Golden Cookies / Reindeer
+            if (Game.shimmers.length > 0) {
+                Game.shimmers.forEach(s => s.pop());
+            }
+            
+            // Manage Wrinklers (Optional: Only pop if shiny? Nah, let's pop all for active play)
+            // In active play (30 clicks/s), Wrinklers actually hurt because they don't multiply click buffs.
+            // We keep them suppressed.
+            if (Game.wrinklers) {
+                Game.wrinklers.forEach(function(w) {
+                    if (w.close == 1) w.hp--; // Attack the wrinkler
+                });
+            }
         }, config.shimmerInterval);
     }
 
-    // 3. SMART BUYER
+    // 3. MINIGAME LOGIC (THE COMBO ENGINE)
+    function startMinigames() {
+        intervals.minigame = setInterval(function() {
+            try {
+                // -- GRIMOIRE (Wizard Tower) --
+                var wizard = Game.Objects['Wizard tower'];
+                if (wizard.level > 0 && wizard.minigameLoaded) {
+                    var M = wizard.minigame;
+                    var maxMana = M.maxMagic;
+                    var currentMana = M.magic;
+                    
+                    // STRATEGY: 
+                    // 1. If we have a FRENZY (x7), cast "Force the Hand of Fate" to try for Click Frenzy.
+                    // 2. If no Frenzy but Mana is full (100%), cast "Conjure Baked Goods" to stop waste.
+                    
+                    var hasFrenzy = false;
+                    for (var i in Game.buffs) {
+                        if (Game.buffs[i].name == "Frenzy") hasFrenzy = true;
+                    }
+
+                    var spellCostFthof = M.getSpellCost(M.spells['hand of fate']);
+                    var spellCostConjure = M.getSpellCost(M.spells['conjure baked goods']);
+
+                    if (hasFrenzy && currentMana >= spellCostFthof) {
+                        M.castSpell(M.spells['hand of fate']);
+                        console.log("AutoCookie: Cast Hand of Fate during Frenzy!");
+                    } else if (!hasFrenzy && currentMana >= (maxMana * 0.95) && currentMana >= spellCostConjure) {
+                        // Cast Conjure just to burn mana efficiently
+                        M.castSpell(M.spells['conjure baked goods']);
+                    }
+                }
+                
+                // -- LEVEL UP SANTA -- 
+                if (Game.santa && Game.santa.level < 14) { // 14 is max
+                     Game.specialTab('santa');
+                     // This is tricky to click via code without DOM access, 
+                     // usually requires emulating a click on the slot. 
+                     // We'll skip complex DOM interaction for stability.
+                }
+
+            } catch (e) {}
+        }, config.minigameInterval);
+    }
+
+    // 4. SMART BUYER (With Kitten Bias)
     function startBuyer() {
         intervals.buyer = setInterval(function() {
             try {
                 var bank = Game.cookies;
                 var passiveCps = Game.cookiesPs;
                 var mouseCps = Game.computedMouseCps; 
-                var clickRate = 1000 / config.clickSpeed; // ~30
-                var activeClickCps = mouseCps * clickRate; // Total CpS from clicking
+                var activeClickCps = mouseCps * (1000/config.clickSpeed);
                 var totalCps = passiveCps + activeClickCps;
 
-                // --- A. EVALUATE BUILDINGS ---
+                // Lag Prevention: If we are in a Click Frenzy (x777), DO NOT calculate/buy.
+                // Just let the clicker run to save CPU.
+                for (var i in Game.buffs) {
+                    if (Game.buffs[i].name == "Click frenzy") {
+                        updateHUD("Active", "Click Frenzy!", "Paused buying to maximize FPS", "Go go go!");
+                        return;
+                    }
+                }
+
+                // -- A. Buildings --
                 var bestBuilding = null;
                 var bestBuildingPayback = Infinity;
-
                 for (var i in Game.Objects) {
                     var obj = Game.Objects[i];
                     if (!obj.locked) {
-                        // How much CpS does this building actually give?
-                        var buildingCps = (obj.storedCps > 0) ? obj.storedCps : 0.1;
-                        // Payback = Price / CpS gain
-                        var payback = obj.price / buildingCps;
-                        
+                        var cps = (obj.storedCps > 0) ? obj.storedCps : 0.1;
+                        var payback = obj.price / cps;
                         if (payback < bestBuildingPayback) {
                             bestBuildingPayback = payback;
                             bestBuilding = obj;
@@ -78,7 +134,7 @@ var AutoCookie = (function() {
                     }
                 }
 
-                // --- B. EVALUATE UPGRADES ---
+                // -- B. Upgrades (With BIAS) --
                 var bestUpgrade = null;
                 var bestUpgradePayback = Infinity;
                 var isClickUpgrade = false;
@@ -86,107 +142,78 @@ var AutoCookie = (function() {
                 var upgrades = Game.UpgradesInStore;
                 for (var i = 0; i < upgrades.length; i++) {
                     var u = upgrades[i];
-                    
-                    // Skip Grandmapocalypse if desired
-                    if (u.name === "Communal brainsweep") continue;
+                    if (u.name === "Communal brainsweep") continue; // Fear the grandmas?
 
-                    var estimatedGain = 0;
                     var desc = u.desc.toLowerCase();
-                    
-                    // HEURISTIC 1: CLICK UPGRADES
-                    // If it mentions mouse/clicking/cursor, we assume it boosts clicking.
-                    // Most click upgrades double the mouse.
-                    if (desc.includes("clicking") || desc.includes("mouse") || u.name.includes("mouse")) {
-                        // Gain = Current Click Power * 30 (Assuming a 100% boost or significant add)
-                        // This prioritizes click upgrades heavily, which is correct for active play.
-                        estimatedGain = activeClickCps; 
-                        var payback = u.getPrice() / estimatedGain;
-                        
-                        if (payback < bestUpgradePayback) {
-                            bestUpgradePayback = payback;
-                            bestUpgrade = u;
-                            isClickUpgrade = true;
-                        }
+                    var estimatedGain = 0;
+
+                    // BIAS 1: Kittens (Multiplicative = GOD TIER)
+                    // We treat kittens as if they pay back 10x faster than reality to force a buy
+                    if (u.name.includes("Kitten")) {
+                         estimatedGain = totalCps * 0.5; // Assume massive 50% boost
                     } 
-                    // HEURISTIC 2: STANDARD UPGRADES
-                    // Hard to calc exact math. We assume they are "Worth it" if they are cheap.
-                    // We assign them a synthetic payback based on current CpS.
+                    // BIAS 2: Click Upgrades
+                    else if (desc.includes("clicking") || desc.includes("mouse")) {
+                        estimatedGain = activeClickCps; // Assume it doubles click output
+                        isClickUpgrade = true;
+                    } 
+                    // BIAS 3: Standard
                     else {
-                        // We assume a generic upgrade gives roughly a 10% boost to global CpS (conservative estimate)
-                        // This prevents buying expensive useless upgrades, but buys cheap ones.
-                        estimatedGain = totalCps * 0.10; 
-                        var payback = u.getPrice() / estimatedGain;
-                        
-                        // We penalize unknown upgrades slightly to prefer sure-thing buildings
-                        if (payback < bestUpgradePayback) {
-                            bestUpgradePayback = payback;
-                            bestUpgrade = u;
-                            isClickUpgrade = false;
-                        }
+                        estimatedGain = totalCps * 0.05; // Conservative 5%
+                    }
+
+                    var payback = u.getPrice() / estimatedGain;
+                    if (payback < bestUpgradePayback) {
+                        bestUpgradePayback = payback;
+                        bestUpgrade = u;
                     }
                 }
 
-                // --- C. COMPARE AND DECIDE ---
-                // We have the best building (math accurate) vs best upgrade (heuristic estimated)
-                
+                // -- C. Compare --
                 var target = null;
                 var targetType = "";
-                var targetPayback = 0;
-
-                // If upgrade pays back faster than building, choose upgrade
+                
+                // If upgrade payback is reasonably close to building payback, prefer upgrade
+                // because upgrades scale better long term.
                 if (bestUpgrade && bestUpgradePayback < bestBuildingPayback) {
                     target = bestUpgrade;
-                    targetType = isClickUpgrade ? "Upgrade (Click Booster)" : "Upgrade (Passive Boost)";
-                    targetPayback = bestUpgradePayback;
+                    targetType = "Upgrade";
                 } else {
                     target = bestBuilding;
-                    targetType = "Building (Passive CpS)";
-                    targetPayback = bestBuildingPayback;
+                    targetType = "Building";
                 }
 
-                // --- D. EXECUTE ---
                 if (target) {
-                    var price = target.price || target.getPrice(); // Buildings use .price, Upgrades use .getPrice()
-                    var timeToAfford = 0;
-                    
+                    var price = target.price || target.getPrice();
                     if (price <= bank) {
-                        updateHUD("BUYING", target.name, targetType, Math.floor(targetPayback), "NOW");
+                        updateHUD("Buying", target.name, targetType, "Payback: " + Math.floor(bestUpgradePayback||bestBuildingPayback));
                         target.buy(1);
                     } else {
-                        // Calculate wait time based on Total CpS (Active + Passive)
                         var needed = price - bank;
-                        timeToAfford = (totalCps > 0) ? Math.ceil(needed / totalCps) : "Inf";
-                        updateHUD("SAVING", target.name, targetType, Math.floor(targetPayback), timeToAfford + "s");
+                        var time = (totalCps > 0) ? Math.ceil(needed / totalCps) : "Inf";
+                        updateHUD("Saving", target.name, time + "s remaining", "Efficient Choice");
                     }
                 }
 
-            } catch (err) {
-                console.log(err);
-            }
+            } catch (err) { console.log(err); }
         }, config.buyInterval);
     }
 
     function init() {
-        console.log("--- AutoCookie v3 Started ---");
+        console.log("--- AutoCookie v4 (Combo Master) Started ---");
         startClicking();
-        startShimmerClicker();
+        startShimmer();
+        startMinigames();
         startBuyer();
     }
 
     function stop() {
-        clearInterval(intervals.clicker);
-        clearInterval(intervals.shimmer);
-        clearInterval(intervals.buyer);
-        if(document.getElementById('autocookie-hud')) {
-            document.getElementById('autocookie-hud').remove();
-        }
+        for (var i in intervals) clearInterval(intervals[i]);
+        if(document.getElementById('autocookie-hud-v4')) document.getElementById('autocookie-hud-v4').remove();
         console.log("--- AutoCookie Stopped ---");
     }
 
-    return {
-        start: init,
-        stop: stop
-    };
+    return { start: init, stop: stop };
 })();
 
 AutoCookie.start();

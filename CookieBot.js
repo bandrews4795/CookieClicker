@@ -1,11 +1,11 @@
 /**
  * ============================================================================
- * AUTOCOOKIE v6.2 - ACTIVE MODE
+ * AUTOCOOKIE v6.4 - ANALYTICS EDITION
  * ============================================================================
  * * UPDATES:
- * - Reduced 'kittenWaitTime': Limits waiting for Kittens to 5 minutes max.
- * - Added 'maxWaitTime': Bot will NOT save for regular items that take too long.
- * - Added 'impulseBuy': Buying items is favored if they are cheap relative to bank.
+ * - Added ROI Display: Shows seconds until the item pays for itself.
+ * - Added Gain Display: Shows projected CpS increase (Flat number and %).
+ * - Maintained Ascension Guard and Patience settings.
  * * ============================================================================
  */
 
@@ -19,42 +19,57 @@ var AutoCookie = (function() {
         minigameInterval: 1000,
         
         // --- PATIENCE SETTINGS ---
-        // 1. Regular items: Ignore if they take longer than 45s to save for.
-        maxWaitTime: 45, 
-        
-        // 2. Kitten Upgrades: We are more patient, but not infinite.
-        // Limit to 5 minutes (300 seconds).
-        kittenWaitTime: 300,
+        maxWaitTime: 45,       // Regular items: 45s max wait
+        kittenWaitTime: 300,   // Kittens: 5m max wait
 
         // HEURISTICS
         weights: {
-            kitten: 200.0,     // High weight for Kittens
-            click: 50.0,       // Mouse upgrades
+            kitten: 200.0,
+            click: 50.0,
             building: 1.0,     
-            baseUpgrade: 2.0   // Prefer upgrades slightly more
+            baseUpgrade: 2.0
         }
     };
 
     var intervals = {};
     
     // --- UI CREATION ---
+    if (document.getElementById('autocookie-hud-v6')) {
+        document.getElementById('autocookie-hud-v6').remove();
+    }
+
     var hud = document.createElement('div');
     hud.id = "autocookie-hud-v6";
     hud.style.cssText = "position: fixed; top: 0; left: 0; z-index: 999999; background: rgba(10, 10, 10, 0.9); color: #ccc; padding: 10px; font-family: monospace; font-size: 11px; border-bottom-right-radius: 8px; border-right: 2px solid #444; border-bottom: 2px solid #444; pointer-events: none; min-width: 220px; box-shadow: 2px 2px 10px rgba(0,0,0,0.5);";
     document.body.appendChild(hud);
 
-    function updateHUD(status, targetName, eta, wrinklerValue) {
+    function updateHUD(status, targetName, eta, wrinklerValue, isAscending, stats) {
+        var titleColor = isAscending ? '#bd00ff' : '#66ccff'; 
+        var statusColor = isAscending ? '#bd00ff' : '#aaa';
+        
+        // Build stats block if we have data
+        var statsHTML = "";
+        if (stats && targetName !== "Searching...") {
+            statsHTML = `
+                <div style="font-size: 10px; margin-bottom: 5px; color: #888;">
+                    <div>ROI: <span style="color:#fff;">${Beautify(stats.roi)}s</span></div>
+                    <div>Gain: <span style="color:#6f6;">+${Beautify(stats.gain)}</span> <span style="color:#6f6;">(+${stats.percent}%)</span></div>
+                </div>
+            `;
+        }
+
         hud.innerHTML = `
             <div style="border-bottom: 1px solid #444; margin-bottom: 5px; padding-bottom: 3px;">
-                <b style="color:#66ccff;">AUTOCOOKIE v6.2</b> <span style="font-size:9px; color:#6f6;">[ACTIVE]</span>
+                <b style="color:${titleColor};">AUTOCOOKIE v6.4</b> <span style="font-size:9px; color:#6f6;">[ACTIVE]</span>
             </div>
             <div style="margin-bottom: 2px;">
                 <span style="color:#aaa;">Target:</span> <b style="color:#ffcc00;">${targetName}</b>
             </div>
-            <div style="margin-bottom: 5px;">
-                <span style="color:#aaa;">Status:</span> ${status} 
+            <div style="margin-bottom: 2px;">
+                <span style="color:${statusColor};">Status:</span> ${status} 
                 <span style="float:right; color:#fff;">${eta}</span>
             </div>
+            ${statsHTML}
             <div style="font-size: 10px; border-top: 1px solid #333; padding-top:3px;">
                  Wrinklers: <span style="color:${wrinklerValue > 0 ? '#ff6666' : '#666'};">${Beautify(wrinklerValue)}</span>
             </div>
@@ -65,6 +80,8 @@ var AutoCookie = (function() {
     function startClicker() {
         intervals.clicker = setInterval(function() {
             try {
+                if (Game.OnAscend) return; 
+
                 Game.ClickCookie();
                 if (Game.Ticker && Math.random() < 0.05) Game.Ticker.click();
                 
@@ -81,6 +98,7 @@ var AutoCookie = (function() {
     function startShimmer() {
         intervals.shimmer = setInterval(function() {
             try {
+                if (Game.OnAscend) return;
                 if (Game.shimmers.length > 0) Game.shimmers.forEach(s => s.pop());
             } catch (e) {}
         }, config.shimmerInterval);
@@ -90,6 +108,11 @@ var AutoCookie = (function() {
     function startBuyer() {
         intervals.buyer = setInterval(function() {
             try {
+                if (Game.OnAscend) {
+                    updateHUD("PAUSED", "Heavenly Chips", "Ascending...", 0, true, null);
+                    return;
+                }
+
                 var bank = Game.cookies;
                 var cps = Game.cookiesPs;
                 var mouseCps = Game.computedMouseCps; 
@@ -104,6 +127,9 @@ var AutoCookie = (function() {
                 var bestItem = null;
                 var bestPayback = Infinity;
                 var itemType = "";
+                
+                // Track stats for the best item
+                var bestStats = { gain: 0, cost: 0, percent: 0, roi: 0 };
 
                 // --- EVALUATE BUILDINGS ---
                 for (var i in Game.Objects) {
@@ -111,13 +137,11 @@ var AutoCookie = (function() {
                     if (!obj.locked) {
                         var cost = obj.price;
                         
-                        // TIMING CHECK
                         var timeToAfford = 0;
                         if (cost > (bank + wrinklerTotal)) {
                             timeToAfford = (cost - (bank + wrinklerTotal)) / effectiveCps;
                         }
                         
-                        // If it takes too long, SKIP IT
                         if (timeToAfford > config.maxWaitTime) continue;
 
                         var gain = (obj.storedCps > 0) ? obj.storedCps : 0.1;
@@ -127,6 +151,8 @@ var AutoCookie = (function() {
                             bestPayback = payback;
                             bestItem = obj;
                             itemType = "Building";
+                            bestStats.gain = gain;
+                            bestStats.cost = cost;
                         }
                     }
                 }
@@ -139,19 +165,14 @@ var AutoCookie = (function() {
                     var name = u.name.toLowerCase();
                     var desc = u.desc.toLowerCase();
 
-                    // TIMING CHECK
                     var timeToAfford = 0;
                     if (cost > (bank + wrinklerTotal)) {
                         timeToAfford = (cost - (bank + wrinklerTotal)) / effectiveCps;
                     }
 
-                    // KITTEN LOGIC
                     var isKitten = name.includes("kitten");
-                    
-                    // Determine the max wait limit for this specific item
                     var limit = isKitten ? config.kittenWaitTime : config.maxWaitTime;
 
-                    // If waiting for this item exceeds its specific limit, skip it.
                     if (timeToAfford > limit) continue;
 
                     var estimatedGain = effectiveCps * 0.1; 
@@ -171,33 +192,39 @@ var AutoCookie = (function() {
                         bestPayback = payback;
                         bestItem = u;
                         itemType = "Upgrade";
+                        bestStats.gain = estimatedGain;
+                        bestStats.cost = cost;
                     }
                 }
 
                 // --- EXECUTE ---
                 if (bestItem) {
+                    // Calculate final stats
+                    bestStats.roi = Math.floor(bestStats.cost / bestStats.gain);
+                    bestStats.percent = ((bestStats.gain / effectiveCps) * 100).toFixed(2);
+                    if (isNaN(bestStats.percent)) bestStats.percent = "0.00";
+
                     var price = (itemType === "Building") ? bestItem.price : bestItem.getPrice();
                     
                     if (bank >= price) {
-                        updateHUD("BUYING", bestItem.name, "Instant", wrinklerTotal);
+                        updateHUD("BUYING", bestItem.name, "Instant", wrinklerTotal, false, bestStats);
                         bestItem.buy(1);
                     } 
                     else if ((bank + wrinklerTotal) >= price) {
-                        updateHUD("POPPING", bestItem.name, "Wrinklers", wrinklerTotal);
+                        updateHUD("POPPING", bestItem.name, "Wrinklers", wrinklerTotal, false, bestStats);
                         Game.wrinklers.forEach(w => { if (w.close == 1) w.hp = 0; });
                     } 
                     else {
                         var needed = price - bank;
                         var timeToReady = Math.ceil(needed / effectiveCps);
                         
-                        // Format time string
                         var timeStr = timeToReady + "s";
                         if (timeToReady > 60) timeStr = Math.floor(timeToReady/60) + "m " + (timeToReady%60) + "s";
                         
-                        updateHUD("SAVING", bestItem.name, timeStr, wrinklerTotal);
+                        updateHUD("SAVING", bestItem.name, timeStr, wrinklerTotal, false, bestStats);
                     }
                 } else {
-                    updateHUD("IDLE", "Searching...", "-", wrinklerTotal);
+                    updateHUD("IDLE", "Searching...", "-", wrinklerTotal, false, null);
                 }
 
             } catch (e) { console.error(e); }
@@ -208,6 +235,8 @@ var AutoCookie = (function() {
     function startMinigames() {
         intervals.minigame = setInterval(function() {
             try {
+                if (Game.OnAscend) return;
+
                 if (Game.santa && Game.santa.level < 14) {
                     Game.specialTab('santa');
                     var upgradeSlot = document.getElementById('santaDraft');
@@ -227,7 +256,7 @@ var AutoCookie = (function() {
     }
 
     function init() {
-        console.log("--- AutoCookie v6.2 (Active) Initiated ---");
+        console.log("--- AutoCookie v6.4 (Analytics) Initiated ---");
         startClicker();
         startShimmer();
         startBuyer();

@@ -51,20 +51,21 @@ GameCompressor.init = function() {
     // --- Header ---
     var header = document.createElement('div');
     header.style.cssText = "padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;";
-    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v10</b>';
+    header.innerHTML = '<b style="color:#ffcc00;" id="legacy-title">LEGACY MOD v10.1</b>';
     
     var settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = "⚙";
     settingsBtn.style.cssText = "background:none; border:none; color:#fff; cursor:pointer; font-size:14px;";
     settingsBtn.onclick = function() {
         var p = document.getElementById('legacy-settings-panel');
-        p.style.display = (p.style.display === 'none') ? 'block' : 'none';
+        if (p) p.style.display = (p.style.display === 'none') ? 'block' : 'none';
     };
     header.appendChild(settingsBtn);
     hud.appendChild(header);
 
     // --- Stats Display ---
     var statsPanel = document.createElement('div');
+    statsPanel.id = "legacy-stats-panel";
     statsPanel.style.padding = "8px";
     statsPanel.innerHTML = `
         <div style="margin-bottom:4px;">Multiplier: <span id="leg-mult" style="color:#f0f; font-weight:bold;">100%</span></div>
@@ -155,6 +156,9 @@ GameCompressor.init = function() {
     };
 
     Game.registerHook('logic', function() {
+        // ASCENSION GUARD
+        if (Game.OnAscend) return; 
+
         GameCompressor.currentMult = GameCompressor.getMult();
 
         // Speedometer & Auto-Harvest
@@ -200,6 +204,9 @@ GameCompressor.init = function() {
     });
 
     Game.registerHook('click', function() {
+        // ASCENSION GUARD
+        if (Game.OnAscend) return;
+
         GameCompressor.clickTracker++;
         var timeToSkip = config.secondsSkippedPerClick * 1000; 
         var framesToSkip = (timeToSkip / 1000) * 30;
@@ -218,15 +225,14 @@ GameCompressor.init = function() {
             if (farm.minigameLoaded && farm.minigame) farm.minigame.nextStep -= timeToSkip;
         }
 
-        // Time Dilator (Extend Active Buffs)
+        // Time Dilator
         if (config.timeDilator) {
             for (var i in Game.buffs) {
-                // Add 3 frames (0.1s) per click
                 Game.buffs[i].time += 3; 
             }
         }
 
-        // Turbo Market (Accelerate Stock Tick)
+        // Turbo Market
         if (config.turboMarket) {
             var bank = Game.Objects['Bank'];
             if (bank.minigameLoaded && bank.minigame) {
@@ -234,7 +240,7 @@ GameCompressor.init = function() {
             }
         }
 
-        // Mana Overload (Regen Magic)
+        // Mana Overload
         if (config.manaOverload) {
             var wizard = Game.Objects['Wizard tower'];
             if (wizard.minigameLoaded && wizard.minigame) {
@@ -247,6 +253,8 @@ GameCompressor.init = function() {
     });
 
     Game.registerHook('cps', function(cps) {
+        // We generally still allow multiplier calc here to avoid HUD flicker,
+        // but since logic pauses, mult stays static.
         return cps * GameCompressor.currentMult;
     });
 
@@ -257,6 +265,39 @@ GameCompressor.init = function() {
         var m = document.getElementById('leg-mult');
         var s = document.getElementById('leg-speed');
         var b = document.getElementById('leg-badges');
+        var statsPanel = document.getElementById('legacy-stats-panel');
+        var title = document.getElementById('legacy-title');
+        var settingsPanel = document.getElementById('legacy-settings-panel');
+
+        // Check Ascension State
+        if (Game.OnAscend) {
+            if (statsPanel) statsPanel.style.display = 'none';
+            if (settingsPanel) settingsPanel.style.display = 'none'; // Auto-hide settings
+            if (title) {
+                title.innerText = "ASCENDING...";
+                title.style.color = "#bd00ff"; // Purple
+            }
+            // Add a visual indicator for paused state
+            if (!document.getElementById('ascend-msg')) {
+                var msg = document.createElement('div');
+                msg.id = 'ascend-msg';
+                msg.style.padding = '10px';
+                msg.style.color = '#bd00ff';
+                msg.style.textAlign = 'center';
+                msg.innerText = "(MOD PAUSED)";
+                document.getElementById('legacy-mod-hud').appendChild(msg);
+            }
+            return;
+        } else {
+            // Restore Normal State
+            if (statsPanel) statsPanel.style.display = 'block';
+            if (title) {
+                title.innerText = "LEGACY MOD v10.1";
+                title.style.color = "#ffcc00";
+            }
+            var msg = document.getElementById('ascend-msg');
+            if (msg) msg.remove();
+        }
 
         if (m) m.innerText = Beautify(Math.round(GameCompressor.currentMult * 100)) + "%";
         if (s) s.innerText = Math.round(GameCompressor.simulatedSpeed) + "x";
@@ -276,7 +317,7 @@ GameCompressor.init = function() {
         }
     }, 500);
 
-    console.log("Legacy Mod v10 (God Mode) Loaded.");
+    console.log("Legacy Mod v10.1 (Ascension Aware) Loaded.");
 };
 
 GameCompressor.init();

@@ -5,24 +5,33 @@ GameCompressor.init = function() {
     // --- 1. CONFIGURATION (Default Values) ---
     // ============================================
     var config = {
+        // Base Math
         timeUnitDivisor: 3600, 
         exponent: 2.2, 
         secondsSkippedPerClick: 0.5,
-        goldenTrigger: true,
-        gardenGrover: true,
-        perfectMagic: true,
-        shinyHunter: true,
-        luckyBreaks: true,
+        
+        // Fun Mode Features
+        goldenTrigger: true,      // Spawns Golden Cookies faster
+        timeDilator: true,        // NEW: Extends active buffs on click
+        
+        gardenGrover: true,       // Speeds up Garden
+        turboMarket: true,        // NEW: Speeds up Stock Market
+        
+        perfectMagic: true,       // No Backfires
+        manaOverload: true,       // NEW: Regens Mana on click
+        
+        shinyHunter: true,        // Filters Wrinklers
+        luckyBreaks: true,        // Fixes bad Lumps
+        
+        // Safety / Utility
         autoHarvestLumps: true,
         protectAchievements: true,
-        neverClickMode: false // New Toggle
+        neverClickMode: false
     };
 
     // ============================================
-    // --- 2. UI CONSTRUCTION (Run Once) ---
+    // --- 2. UI CONSTRUCTION ---
     // ============================================
-    
-    // Remove old HUD if exists
     if (document.getElementById('legacy-mod-hud')) {
         document.getElementById('legacy-mod-hud').remove();
     }
@@ -36,13 +45,13 @@ GameCompressor.init = function() {
         border-bottom-left-radius: 8px; color: #ccc; 
         font-family: 'Tahoma', sans-serif; font-size: 11px; 
         box-shadow: -2px 2px 10px rgba(0,0,0,0.5);
-        display: flex; flex-direction: column; width: 220px;
+        display: flex; flex-direction: column; width: 230px;
     `;
 
     // --- Header ---
     var header = document.createElement('div');
     header.style.cssText = "padding: 8px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444;";
-    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v9.1</b>';
+    header.innerHTML = '<b style="color:#ffcc00;">LEGACY MOD v10</b>';
     
     var settingsBtn = document.createElement('button');
     settingsBtn.innerHTML = "⚙";
@@ -60,16 +69,15 @@ GameCompressor.init = function() {
     statsPanel.innerHTML = `
         <div style="margin-bottom:4px;">Multiplier: <span id="leg-mult" style="color:#f0f; font-weight:bold;">100%</span></div>
         <div style="margin-bottom:4px;">Warp Speed: <span id="leg-speed" style="color:#0f0; font-weight:bold;">0x</span></div>
-        <div id="leg-badges" style="font-size:9px; color:#666; margin-top:6px;">LOADING...</div>
+        <div id="leg-badges" style="font-size:9px; color:#666; margin-top:6px; line-height:1.4em;">LOADING...</div>
     `;
     hud.appendChild(statsPanel);
 
-    // --- Settings Panel (Hidden by default) ---
+    // --- Settings Panel ---
     var settingsPanel = document.createElement('div');
     settingsPanel.id = "legacy-settings-panel";
-    settingsPanel.style.cssText = "padding: 8px; background: rgba(30,30,30,0.5); border-top: 1px solid #444; display: none;";
+    settingsPanel.style.cssText = "padding: 8px; background: rgba(30,30,30,0.95); border-top: 1px solid #444; display: none; max-height: 400px; overflow-y: auto;";
     
-    // Helper to create toggle
     function createToggle(label, key) {
         var row = document.createElement('div');
         row.style.marginBottom = "4px";
@@ -78,25 +86,20 @@ GameCompressor.init = function() {
         chk.checked = config[key];
         chk.style.marginRight = "6px";
         chk.onchange = function() { config[key] = chk.checked; };
-        
         var lbl = document.createElement('span');
         lbl.innerText = label;
-        
         row.appendChild(chk);
         row.appendChild(lbl);
         return row;
     }
 
-    // Helper to create number input
     function createInput(label, key, step) {
         var row = document.createElement('div');
         row.style.marginBottom = "4px";
         row.style.display = "flex";
         row.style.justifyContent = "space-between";
-        
         var lbl = document.createElement('span');
         lbl.innerText = label;
-        
         var inp = document.createElement('input');
         inp.type = "number";
         inp.value = config[key];
@@ -106,23 +109,32 @@ GameCompressor.init = function() {
         inp.style.border = "1px solid #555";
         inp.style.color = "#fff";
         inp.onchange = function() { config[key] = parseFloat(inp.value); };
-
         row.appendChild(lbl);
         row.appendChild(inp);
         return row;
     }
 
+    // --- Add Controls ---
     settingsPanel.appendChild(createInput("Warp (Sec/Click)", "secondsSkippedPerClick", 0.1));
     settingsPanel.appendChild(createInput("Difficulty Exp", "exponent", 0.1));
     settingsPanel.appendChild(document.createElement('hr'));
+    
+    // Fun Mode Toggles
     settingsPanel.appendChild(createToggle("Golden Trigger", "goldenTrigger"));
+    settingsPanel.appendChild(createToggle("Time Dilator (Infinite Buffs)", "timeDilator"));
     settingsPanel.appendChild(createToggle("Garden Grover", "gardenGrover"));
+    settingsPanel.appendChild(createToggle("Turbo Market", "turboMarket"));
     settingsPanel.appendChild(createToggle("Perfect Magic", "perfectMagic"));
+    settingsPanel.appendChild(createToggle("Mana Overload", "manaOverload"));
     settingsPanel.appendChild(createToggle("Shiny Hunter", "shinyHunter"));
     settingsPanel.appendChild(createToggle("Lucky Breaks", "luckyBreaks"));
-    settingsPanel.appendChild(createToggle("Safe Mode", "protectAchievements"));
-    settingsPanel.appendChild(createToggle("Neverclick Mode", "neverClickMode")); // Added Toggle
-
+    
+    // Safety & Utility Toggles
+    settingsPanel.appendChild(document.createElement('hr'));
+    settingsPanel.appendChild(createToggle("Auto-Harvest Lumps", "autoHarvestLumps"));
+    settingsPanel.appendChild(createToggle("Safe Mode (Achievements)", "protectAchievements"));
+    settingsPanel.appendChild(createToggle("Neverclick Mode", "neverClickMode"));
+    
     hud.appendChild(settingsPanel);
     document.body.appendChild(hud);
 
@@ -145,6 +157,7 @@ GameCompressor.init = function() {
     Game.registerHook('logic', function() {
         GameCompressor.currentMult = GameCompressor.getMult();
 
+        // Speedometer & Auto-Harvest
         if (Game.time % 30 == 0) {
             GameCompressor.simulatedSpeed = GameCompressor.clickTracker * config.secondsSkippedPerClick;
             GameCompressor.clickTracker = 0;
@@ -156,12 +169,14 @@ GameCompressor.init = function() {
             }
         }
 
+        // Shiny Hunter
         if (config.shinyHunter && Game.wrinklers) {
             Game.wrinklers.forEach(function(w) {
                 if (w.phase == 2 && w.type == 0) w.hp = 0;
             });
         }
 
+        // Perfect Magic
         if (config.perfectMagic) {
             var wizard = Game.Objects['Wizard tower'];
             if (wizard.minigameLoaded && wizard.minigame) {
@@ -169,18 +184,16 @@ GameCompressor.init = function() {
             }
         }
 
+        // Lucky Breaks
         if (config.luckyBreaks && Game.lumpCurrentType == 3) {
             Game.lumpCurrentType = (Math.random() < 0.5) ? 1 : 4;
             if (Game.lumpRef) Game.lumpRef.className = 'lump lump-'+Game.lumpCurrentType;
         }
 
-        // --- NEW NEVERCLICK LOGIC ---
+        // Neverclick Mode Passive
         if (config.neverClickMode) {
              var cursor = Game.Objects['Cursor'];
-             // Only active if we have 0 cursors and cannot afford one yet
              if (cursor.amount == 0 && Game.cookies < cursor.getPrice()) {
-                 // Accelerate golden cookie spawn drastically
-                 // Adds 100 frames (~3.3s) to the timer per tick
                  Game.shimmerTypes.golden.time += 100;
              }
         }
@@ -191,16 +204,45 @@ GameCompressor.init = function() {
         var timeToSkip = config.secondsSkippedPerClick * 1000; 
         var framesToSkip = (timeToSkip / 1000) * 30;
 
+        // Base Warps
         if (Game.canLumps()) Game.lumpT -= timeToSkip;
         if (Game.researchT > 0) Game.researchT -= framesToSkip;
         if (Game.pledgeT > 0) Game.pledgeT -= framesToSkip;
         if (Game.wrinklerRespawns > 0) Game.wrinklerRespawns -= framesToSkip;
 
+        // Fun Mode Triggers
         if (config.goldenTrigger) Game.shimmerTypes.golden.time += framesToSkip;
         
         if (config.gardenGrover) {
             var farm = Game.Objects['Farm'];
             if (farm.minigameLoaded && farm.minigame) farm.minigame.nextStep -= timeToSkip;
+        }
+
+        // Time Dilator (Extend Active Buffs)
+        if (config.timeDilator) {
+            for (var i in Game.buffs) {
+                // Add 3 frames (0.1s) per click
+                Game.buffs[i].time += 3; 
+            }
+        }
+
+        // Turbo Market (Accelerate Stock Tick)
+        if (config.turboMarket) {
+            var bank = Game.Objects['Bank'];
+            if (bank.minigameLoaded && bank.minigame) {
+                bank.minigame.tickT += framesToSkip;
+            }
+        }
+
+        // Mana Overload (Regen Magic)
+        if (config.manaOverload) {
+            var wizard = Game.Objects['Wizard tower'];
+            if (wizard.minigameLoaded && wizard.minigame) {
+                wizard.minigame.magic += 0.5;
+                if (wizard.minigame.magic > wizard.minigame.maxMagic) {
+                    wizard.minigame.magic = wizard.minigame.maxMagic;
+                }
+            }
         }
     });
 
@@ -209,10 +251,9 @@ GameCompressor.init = function() {
     });
 
     // ============================================
-    // --- 4. HUD UPDATE LOOP (Lightweight) ---
+    // --- 4. HUD UPDATE LOOP ---
     // ============================================
     setInterval(function() {
-        // Only update the text values, do NOT rebuild the HTML
         var m = document.getElementById('leg-mult');
         var s = document.getElementById('leg-speed');
         var b = document.getElementById('leg-badges');
@@ -220,21 +261,22 @@ GameCompressor.init = function() {
         if (m) m.innerText = Beautify(Math.round(GameCompressor.currentMult * 100)) + "%";
         if (s) s.innerText = Math.round(GameCompressor.simulatedSpeed) + "x";
         if (b) {
-            // Helper for color coding badges based on config state
             var c = function(bool, text) { 
                 return `<span style="color:${bool ? '#fff' : '#444'}; font-weight:${bool?'bold':'normal'}">${text}</span>`; 
             };
             b.innerHTML = `
                 ${c(config.goldenTrigger, 'GOLD')} | 
+                ${c(config.timeDilator, 'TIME')} |
+                ${c(config.turboMarket, 'STOCK')} |
+                ${c(config.manaOverload, 'MANA')} <br>
                 ${c(config.shinyHunter, 'HUNT')} | 
                 ${c(config.perfectMagic, 'MAGIC')} | 
-                ${c(config.gardenGrover, 'GARDEN')} |
-                ${c(config.neverClickMode, 'NEVERCLICK')}
+                ${c(config.gardenGrover, 'GARDEN')}
             `;
         }
     }, 500);
 
-    console.log("Legacy Mod v9.1 (Neverclick Edition) Loaded.");
+    console.log("Legacy Mod v10 (God Mode) Loaded.");
 };
 
 GameCompressor.init();

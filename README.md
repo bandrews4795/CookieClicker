@@ -9,5 +9,7 @@ It also compensates for time played and clicks already done. It's not perfect, s
 This mod can be added to cookie clicker by copying the following code into a bookmark and opening it during a game:
 
 javascript: (function () {
-	Game.LoadMod('https://bandrews4795.github.io/CookieClicker/CookieGameBreak.js');
+	Game.LoadMod('https://bandrews4795.github.io/CookieClicker/SecretDippingSauce.js');
 }());
+
+Or just copy the Cookiebot, or DippingSauce raw code into the console, Ctrl+Shift+J to access
